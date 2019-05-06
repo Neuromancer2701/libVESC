@@ -52,6 +52,7 @@ public:
     double vbPopFrontDouble16(double scale);
     double vbPopFrontDouble32Auto();
     string vbPopFrontString();
+    auto size() {return data.size();}
 
 private:
     inline void erase(int i){data.erase(begin(data),begin(data) + i);}

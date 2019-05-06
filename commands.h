@@ -37,58 +37,14 @@ public:
     bool getSendCan();
     void setCanSendId(unsigned int id);
     int getCanSendId();
-    void setMcConfig(ConfigParams *mcConfig);
-    void setAppConfig(ConfigParams *appConfig);
-    void startFirmwareUpload(QByteArray &newFirmware, bool isBootloader = false, bool fwdCan = false);
-    double getFirmwareUploadProgress();
-    string getFirmwareUploadStatus();
-    void cancelFirmwareUpload();
-    void checkMcConfig();
-    void emitEmptyValues();
-    void emitEmptySetupValues();
-
-    bool getLimitedSupportsFwdAllCan() const;
-    void setLimitedSupportsFwdAllCan(bool limitedSupportsFwdAllCan);
 
 
-    void dataToSend(QByteArray &data);
-
-    void fwVersionReceived(int major, int minor, QString hw, QByteArray uuid, bool isPaired);
-    void ackReceived(QString ackType);
-    void valuesReceived(MC_VALUES values, unsigned int mask);
-    void printReceived(QString str);
-    void samplesReceived(QByteArray bytes);
-    void rotorPosReceived(double pos);
-    void experimentSamplesReceived(QVector<double> samples);
-    void bldcDetectReceived(bldc_detect param);
-    void decodedPpmReceived(double value, double last_len);
-    void decodedAdcReceived(double value, double voltage, double value2, double voltage2);
-    void decodedChukReceived(double value);
-    void motorRLReceived(double r, double l);
-    void motorLinkageReceived(double flux_linkage);
-    void encoderParamReceived(double offset, double ratio, bool inverted);
-    void customAppDataReceived(QByteArray data);
-    void focHallTableReceived(QVector<int> hall_table, int res);
-    void nrfPairingRes(int res);
-    void mcConfigCheckResult(QStringList paramsNotSet);
-    void gpdBufferNotifyReceived();
-    void gpdBufferSizeLeftReceived(int sizeLeft);
-    void valuesSetupReceived(SETUP_VALUES values, unsigned int mask);
-    void detectAllFocReceived(int result);
-    void pingCanRx(QVector<int> devs, bool isTimeout);
-    void valuesImuReceived(IMU_VALUES values, unsigned int mask);
-    void bmConnRes(int res);
-    void bmEraseFlashAllRes(int res);
-    void bmWriteFlashRes(int res);
-    void bmRebootRes(int res);
-
-public slots:
-    void processPacket(QByteArray data);
+    void processPacket(VByteArray data);
 
     void getFwVersion();
     void getValues();
-    void sendTerminalCmd(QString cmd);
-    void sendTerminalCmdSync(QString cmd);
+    void sendTerminalCmd(string cmd);
+    void sendTerminalCmdSync(string cmd);
     void setDutyCycle(double dutyCycle);
     void setCurrent(double current);
     void setCurrentBrake(double current);
@@ -106,26 +62,6 @@ public slots:
     void detectMotorParam(double current, double min_rpm, double low_duty);
     void reboot();
     void sendAlive();
-    void getDecodedPpm();
-    void getDecodedAdc();
-    void getDecodedChuk();
-    void setServoPos(double pos);
-    void measureRL();
-    void measureLinkage(double current, double min_rpm, double low_duty, double resistance);
-    void measureEncoder(double current);
-    void measureHallFoc(double current);
-    void sendCustomAppData(QByteArray data);
-    void sendCustomAppData(unsigned char *data, unsigned int len);
-    void setChukData(chuck_data &data);
-    void pairNrf(int ms);
-    void gpdSetFsw(float fsw);
-    void getGpdBufferSizeLeft();
-    void gpdFillBuffer(QVector<float> samples);
-    void gpdOutputSample(float sample);
-    void gpdSetMode(gpd_output_mode mode);
-    void gpdFillBufferInt8(QVector<qint8> samples);
-    void gpdFillBufferInt16(QVector<qint16> samples);
-    void gpdSetBufferIntScale(float scale);
     void getValuesSetup();
     void setMcconfTemp(const MCCONF_TEMP &conf, bool is_setup, bool store,
                        bool forward_can, bool divide_by_controllers, bool ack);
@@ -143,35 +79,16 @@ public slots:
     void bmReboot();
     void bmDisconnect();
 
-private slots:
-    void timerSlot();
+
 
 private:
-    void emitData(QByteArray data);
-    void firmwareUploadUpdate(bool isTimeout);
-    QString faultToStr(mc_fault_code fault);
 
-    QTimer *mTimer;
+    string faultToStr(mc_fault_code fault);
+
     bool mSendCan;
     int mCanId;
     bool mIsLimitedMode;
     bool mLimitedSupportsFwdAllCan;
-
-    // FW upload state
-    QByteArray mNewFirmware;
-    bool mFirmwareIsUploading;
-    int mFirmwareState;
-    int mFimwarePtr;
-    int mFirmwareTimer;
-    int mFirmwareRetries;
-    bool mFirmwareIsBootloader;
-    bool mFirmwareFwdAllCan;
-    QString mFirmwareUploadStatus;
-
-    ConfigParams *mMcConfig;
-    ConfigParams *mAppConfig;
-    ConfigParams mMcConfigLast;
-    bool mCheckNextMcConfig;
 
     int mTimeoutCount;
     int mTimeoutFwVer;
