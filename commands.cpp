@@ -106,8 +106,7 @@ void Commands::processPacket(VByteArray data)
 
         if (data.size() >= 12)
         {
-            uuid.push_back()
-            uuid.append(data.left(12));
+            uuid = data.left(12);
             data.erase(12);
         }
 
@@ -125,7 +124,8 @@ void Commands::processPacket(VByteArray data)
 
         uint32_t
         mask = 0xFFFFFFFF;
-        if (id == COMM_GET_VALUES_SELECTIVE) {
+        if (id == COMM_GET_VALUES_SELECTIVE)
+        {
             mask = data.vbPopFrontUint32();
         }
 
@@ -195,7 +195,8 @@ void Commands::processPacket(VByteArray data)
             values.fault_str = faultToStr(values.fault_code);
         }
 
-        if (data.size() >= 4) {
+        if (data.size() >= 4)
+        {
             if (mask & ((uint32_t)1 << 16))
             {
                 values.position = data.vbPopFrontDouble32(1e6);
@@ -227,102 +228,10 @@ void Commands::processPacket(VByteArray data)
                 values.temp_mos_3 = data.vbPopFrontDouble16(1e1);
             }
         }
-
-        emit valuesReceived(values, mask);
     } break;
 
-    case COMM_GET_MCCONF:
-    case COMM_GET_MCCONF_DEFAULT:
-        mTimeoutMcconf = 0;
-        if (mMcConfig) {
-            mMcConfig->deSerialize(vb);
-            mMcConfig->updateDone();
-
-            if (mCheckNextMcConfig) {
-                mCheckNextMcConfig = false;
-                emit mcConfigCheckResult(mMcConfig->checkDifference(&mMcConfigLast));
-            }
-        }
-        break;
-
-
-
-    case COMM_GET_VALUES_SETUP:
-    case COMM_GET_VALUES_SETUP_SELECTIVE: {
-        mTimeoutValuesSetup = 0;
-        SETUP_VALUES values;
-
-        uint32_t mask = 0xFFFFFFFF;
-        if (id == COMM_GET_VALUES_SETUP_SELECTIVE) {
-            mask = data.vbPopFrontUint32();
-        }
-
-        if (mask & ((uint32_t)1 << 0)) {
-            values.temp_mos = data.vbPopFrontDouble16(1e1);
-        }
-        if (mask & ((uint32_t)1 << 1)) {
-            values.temp_motor = data.vbPopFrontDouble16(1e1);
-        }
-        if (mask & ((uint32_t)1 << 2)) {
-            values.current_motor = data.vbPopFrontDouble32(1e2);
-        }
-        if (mask & ((uint32_t)1 << 3)) {
-            values.current_in = data.vbPopFrontDouble32(1e2);
-        }
-        if (mask & ((uint32_t)1 << 4)) {
-            values.duty_now = data.vbPopFrontDouble16(1e3);
-        }
-        if (mask & ((uint32_t)1 << 5)) {
-            values.rpm = data.vbPopFrontDouble32(1e0);
-        }
-        if (mask & ((uint32_t)1 << 6)) {
-            values.speed = data.vbPopFrontDouble32(1e3);
-        }
-        if (mask & ((uint32_t)1 << 7)) {
-            values.v_in = data.vbPopFrontDouble16(1e1);
-        }
-        if (mask & ((uint32_t)1 << 8)) {
-            values.battery_level = data.vbPopFrontDouble16(1e3);
-        }
-        if (mask & ((uint32_t)1 << 9)) {
-            values.amp_hours = data.vbPopFrontDouble32(1e4);
-        }
-        if (mask & ((uint32_t)1 << 10)) {
-            values.amp_hours_charged = data.vbPopFrontDouble32(1e4);
-        }
-        if (mask & ((uint32_t)1 << 11)) {
-            values.watt_hours = data.vbPopFrontDouble32(1e4);
-        }
-        if (mask & ((uint32_t)1 << 12)) {
-            values.watt_hours_charged = data.vbPopFrontDouble32(1e4);
-        }
-        if (mask & ((uint32_t)1 << 13)) {
-            values.tachometer = data.vbPopFrontDouble32(1e3);
-        }
-        if (mask & ((uint32_t)1 << 14)) {
-            values.tachometer_abs = data.vbPopFrontDouble32(1e3);
-        }
-        if (mask & ((uint32_t)1 << 15)) {
-            values.position = data.vbPopFrontDouble32(1e6);
-        }
-        if (mask & ((uint32_t)1 << 16)) {
-            values.fault_code = (mc_fault_code)data.vbPopFrontInt8();
-            values.fault_str = faultToStr(values.fault_code);
-        }
-        if (mask & ((uint32_t)1 << 17)) {
-            values.vesc_id = data.vbPopFrontUint8();
-        }
-        if (mask & ((uint32_t)1 << 18)) {
-            values.num_vescs = data.vbPopFrontUint8();
-        }
-        if (mask & ((uint32_t)1 << 19)) {
-            values.battery_wh = data.vbPopFrontDouble32(1e3);
-        }
-
-        emit valuesSetupReceived(values, mask);
-    } break;
-
-    case COMM_GET_IMU_DATA: {
+    case COMM_GET_IMU_DATA:
+        {
         mTimeoutImuData = 0;
 
         IMU_VALUES values;
@@ -383,8 +292,6 @@ void Commands::processPacket(VByteArray data)
         }
 
     } break;
-
-
 
     default:
         break;
@@ -481,14 +388,6 @@ void Commands::setHandbrake(double current)
 
 }
 
-void Commands::setDetect(disp_pos_mode mode)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_SET_DETECT);
-    vb.vbAppendInt8(mode);
-
-}
-
 void Commands::samplePrint(debug_sampling_mode mode, int sample_len, int dec)
 {
     VByteArray vb;
@@ -496,94 +395,6 @@ void Commands::samplePrint(debug_sampling_mode mode, int sample_len, int dec)
     vb.vbAppendInt8(mode);
     vb.vbAppendUint16(sample_len);
     vb.vbAppendUint8(dec);
-
-}
-
-void Commands::getMcconf()
-{
-    if (mTimeoutMcconf > 0) {
-        return;
-    }
-
-    mTimeoutMcconf = mTimeoutCount;
-
-    mCheckNextMcConfig = false;
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_MCCONF);
-
-}
-
-void Commands::getMcconfDefault()
-{
-    if (mTimeoutMcconf > 0) {
-        return;
-    }
-
-    mTimeoutMcconf = mTimeoutCount;
-
-    mCheckNextMcConfig = false;
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_MCCONF_DEFAULT);
-
-}
-
-void Commands::setMcconf(bool check)
-{
-    if (mMcConfig) {
-        mMcConfigLast = *mMcConfig;
-        VByteArray vb;
-        vb.vbAppendInt8(COMM_SET_MCCONF);
-        mMcConfig->serialize(vb);
-
-
-        if (check) {
-            checkMcConfig();
-        }
-    }
-}
-
-void Commands::getAppConf()
-{
-    if (mTimeoutAppconf > 0) {
-        return;
-    }
-
-    mTimeoutAppconf = mTimeoutCount;
-
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_APPCONF);
-
-}
-
-void Commands::getAppConfDefault()
-{
-    if (mTimeoutAppconf > 0) {
-        return;
-    }
-
-    mTimeoutAppconf = mTimeoutCount;
-
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_APPCONF_DEFAULT);
-
-}
-
-void Commands::setAppConf()
-{
-    if (mAppConfig) {
-        VByteArray vb;
-        vb.vbAppendInt8(COMM_SET_APPCONF);
-        mAppConfig->serialize(vb);
-    }
-}
-
-void Commands::detectMotorParam(double current, double min_rpm, double low_duty)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_DETECT_MOTOR_PARAM);
-    vb.vbAppendDouble32(current, 1e3);
-    vb.vbAppendDouble32(min_rpm, 1e3);
-    vb.vbAppendDouble32(low_duty, 1e3);
 
 }
 
@@ -599,110 +410,6 @@ void Commands::sendAlive()
     VByteArray vb;
     vb.vbAppendInt8(COMM_ALIVE);
 
-}
-
-void Commands::getDecodedPpm()
-{
-    if (mTimeoutDecPpm > 0) {
-        return;
-    }
-
-    mTimeoutDecPpm = mTimeoutCount;
-
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_DECODED_PPM);
-
-}
-
-void Commands::getDecodedAdc()
-{
-    if (mTimeoutDecAdc > 0) {
-        return;
-    }
-
-    mTimeoutDecAdc = mTimeoutCount;
-
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_DECODED_ADC);
-
-}
-
-void Commands::getDecodedChuk()
-{
-    if (mTimeoutDecChuk > 0) {
-        return;
-    }
-
-    mTimeoutDecChuk = mTimeoutCount;
-
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_DECODED_CHUK);
-
-}
-
-void Commands::setServoPos(double pos)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_SET_SERVO_POS);
-    vb.vbAppendDouble16(pos, 1e3);
-
-}
-
-void Commands::measureRL()
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_DETECT_MOTOR_R_L);
-}
-
-void Commands::measureLinkage(double current, double min_rpm, double low_duty, double resistance)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_DETECT_MOTOR_FLUX_LINKAGE);
-    vb.vbAppendDouble32(current, 1e3);
-    vb.vbAppendDouble32(min_rpm, 1e3);
-    vb.vbAppendDouble32(low_duty, 1e3);
-    vb.vbAppendDouble32(resistance, 1e6);
-}
-
-void Commands::measureEncoder(double current)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_DETECT_ENCODER);
-    vb.vbAppendDouble32(current, 1e3);
-}
-
-void Commands::measureHallFoc(double current)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_DETECT_HALL_FOC);
-    vb.vbAppendDouble32(current, 1e3);
-}
-
-void Commands::sendCustomAppData(QByteArray data)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_CUSTOM_APP_DATA);
-    vb.append(data);
-}
-
-
-void Commands::setMcconfTemp(const MCCONF_TEMP &conf, bool is_setup, bool store,
-                             bool forward_can, bool divide_by_controllers, bool ack)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(is_setup ? COMM_SET_MCCONF_TEMP_SETUP : COMM_SET_MCCONF_TEMP);
-    vb.vbAppendInt8(store);
-    vb.vbAppendInt8(forward_can);
-    vb.vbAppendInt8(ack);
-    vb.vbAppendInt8(divide_by_controllers);
-    vb.vbAppendDouble32Auto(conf.current_min_scale);
-    vb.vbAppendDouble32Auto(conf.current_max_scale);
-    vb.vbAppendDouble32Auto(conf.erpm_or_speed_min);
-    vb.vbAppendDouble32Auto(conf.erpm_or_speed_max);
-    vb.vbAppendDouble32Auto(conf.duty_min);
-    vb.vbAppendDouble32Auto(conf.duty_max);
-    vb.vbAppendDouble32Auto(conf.watt_min);
-    vb.vbAppendDouble32Auto(conf.watt_max);
 }
 
 void Commands::getValuesSelective(unsigned int mask)
@@ -800,43 +507,6 @@ void Commands::getImuData(unsigned int mask)
     VByteArray vb;
     vb.vbAppendInt8(COMM_GET_IMU_DATA);
     vb.vbAppendUint16(mask);
-
-}
-
-void Commands::bmConnect()
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_BM_CONNECT);
-
-}
-
-void Commands::bmEraseFlashAll()
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_BM_ERASE_FLASH_ALL);
-
-}
-
-void Commands::bmWriteFlash(uint32_t addr, QByteArray data)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_BM_WRITE_FLASH);
-    vb.vbAppendUint32(addr);
-    vb.append(data);
-
-}
-
-void Commands::bmReboot()
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_BM_REBOOT);
-
-}
-
-void Commands::bmDisconnect()
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_BM_DISCONNECT);
 
 }
 

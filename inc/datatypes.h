@@ -114,19 +114,50 @@ struct MC_VALUES
 };
 
 
-struct MCCONF_TEMP {
+struct IMU_VALUES {
 
-public:
-    double current_min_scale;
-    double current_max_scale;
-    double erpm_or_speed_min;
-    double erpm_or_speed_max;
-    double duty_min;
-    double duty_max;
-    double watt_min;
-    double watt_max;
-    string name;
+    IMU_VALUES()
+    {
+        roll = 0;
+        pitch = 0;
+        yaw = 0;
+        accX = 0;
+        accY = 0;
+        accZ = 0;
+        gyroX = 0;
+        gyroY = 0;
+        gyroZ = 0;
+        magX = 0;
+        magY = 0;
+        magZ = 0;
+        q0 = 1;
+        q1 = 0;
+        q2 = 0;
+        q3 = 0;
+    }
+
+    double roll;
+    double pitch;
+    double yaw;
+
+    double accX;
+    double accY;
+    double accZ;
+
+    double gyroX;
+    double gyroY;
+    double gyroZ;
+
+    double magX;
+    double magY;
+    double magZ;
+
+    double q0;
+    double q1;
+    double q2;
+    double q3;
 };
+
 
 
 enum debug_sampling_mode
