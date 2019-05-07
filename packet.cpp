@@ -54,27 +54,15 @@ const unsigned short crc16_tab[] = { 0x0000, 0x1021, 0x2042, 0x3063, 0x4084,
         0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0 };
 }
 
-Packet::Packet(QObject *parent) : QObject(parent)
+Packet::Packet()
 {
-    mRxTimer = 0;
-    mByteTimeout = 50;
-    mMaxPacketLen = 512;
-    mRxReadPtr = 0;
-    mRxWritePtr = 0;
-    mBytesLeft = 0;
-    mBufferLen = mMaxPacketLen + 8;
-    mRxBuffer = new unsigned char[mBufferLen];
 
-    mTimer = new QTimer(this);
-    mTimer->setInterval(10);
-    mTimer->start();
 
-    connect(mTimer, SIGNAL(timeout()), this, SLOT(timerSlot()));
 }
 
 Packet::~Packet()
 {
-    delete[] mRxBuffer;
+
 }
 
 void Packet::sendPacket(const QByteArray &data)
@@ -186,19 +174,8 @@ void Packet::processData(QByteArray data)
     }
 }
 
-void Packet::timerSlot()
-{
-    if (mRxTimer) {
-        mRxTimer--;
-    } else {
-        mRxReadPtr = 0;
-        mRxWritePtr = 0;
-        mBytesLeft = 0;
-    }
-}
 
-int Packet::try_decode_packet(unsigned char *buffer, unsigned int in_len,
-                              int *bytes_left, QVector<QByteArray> &decodedPackets)
+int Packet::try_decode_packet(unsigned char *buffer, unsigned int in_len, int *bytes_left, vector<VByteArray> &decodedPackets)
 {
     *bytes_left = 0;
 
@@ -271,10 +248,28 @@ int Packet::try_decode_packet(unsigned char *buffer, unsigned int in_len,
                           | (unsigned short)buffer[data_start + len + 1];
 
     if (crc_calc == crc_rx) {
-        QByteArray res((const char*)(buffer + data_start), (int)len);
-        decodedPackets.append(res);
+        VByteArray res((const char*)(buffer + data_start), (int)len);
+        decodedPackets.push_back(res);
         return len + data_start + 3;
     } else {
         return -1;
+    }
+}
+
+template<typename T>
+void Packet::append(T data)
+{
+    unsigned bytes = sizeof(data);
+
+    switch(bytes)
+    {
+        case Integer:
+             rawData.push_back(static_cast<byte>((data >> 24) & 0xFF));
+             rawData.push_back(static_cast<byte>((data >> 16) & 0xFF));
+        case Word:
+             rawData.push_back(static_cast<byte>((data >> 8) & 0xFF));
+        case Byte:
+             rawData.push_back(static_cast<byte>(data & 0xFF));
+             break;
     }
 }
