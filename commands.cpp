@@ -93,8 +93,8 @@ void Commands::processPacket(VByteArray data)
         mTimeoutFwVer = 0;
         int fw_major = -1;
         int fw_minor = -1;
-        QString hw;
-        QByteArray uuid;
+        string hw;
+        vector<char> uuid;
         bool isPaired = false;
 
         if (data.size() >= 2)
@@ -106,8 +106,9 @@ void Commands::processPacket(VByteArray data)
 
         if (data.size() >= 12)
         {
+            uuid.push_back()
             uuid.append(data.left(12));
-            data.remove(0, 12);
+            data.erase(12);
         }
 
         if (data.size() >= 1)

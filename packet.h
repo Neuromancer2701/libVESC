@@ -39,9 +39,6 @@ signals:
 public slots:
     void processData(QByteArray data);
 
-private slots:
-    void timerSlot();
-
 private:
     QTimer *mTimer;
     int mRxTimer;

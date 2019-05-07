@@ -51,35 +51,18 @@ public:
     void setRpm(int rpm);
     void setPos(double pos);
     void setHandbrake(double current);
-    void setDetect(disp_pos_mode mode);
     void samplePrint(debug_sampling_mode mode, int sample_len, int dec);
-    void getMcconf();
-    void getMcconfDefault();
-    void setMcconf(bool check = true);
-    void getAppConf();
-    void getAppConfDefault();
-    void setAppConf();
-    void detectMotorParam(double current, double min_rpm, double low_duty);
     void reboot();
     void sendAlive();
     void getValuesSetup();
-    void setMcconfTemp(const MCCONF_TEMP &conf, bool is_setup, bool store,
-                       bool forward_can, bool divide_by_controllers, bool ack);
+    void setMcconfTemp(const MCCONF_TEMP &conf, bool is_setup, bool store, bool forward_can, bool divide_by_controllers, bool ack);
     void getValuesSelective(unsigned int mask);
     void getValuesSetupSelective(unsigned int mask);
     void measureLinkageOpenloop(double current, double erpm_per_sec, double low_duty, double resistance);
-    void detectAllFoc(bool detect_can, double max_power_loss, double min_current_in,
-                      double max_current_in, double openloop_rpm, double sl_erpm);
+    void detectAllFoc(bool detect_can, double max_power_loss, double min_current_in, double max_current_in, double openloop_rpm, double sl_erpm);
     void pingCan();
     void disableAppOutput(int time_ms, bool fwdCan);
     void getImuData(unsigned int mask);
-    void bmConnect();
-    void bmEraseFlashAll();
-    void bmWriteFlash(uint32_t addr, QByteArray data);
-    void bmReboot();
-    void bmDisconnect();
-
-
 
 private:
 

@@ -53,9 +53,11 @@ public:
     double vbPopFrontDouble32Auto();
     string vbPopFrontString();
     auto size() {return data.size();}
+    vector<char> left(unsigned i)   { return vector<char>(begin(data),begin(data) + i);}
+    void erase(unsigned i)          { data.erase(begin(data),begin(data) + i);         }
 
 private:
-    inline void erase(int i){data.erase(begin(data),begin(data) + i);}
+
     vector<signed char> data;
 
 };
