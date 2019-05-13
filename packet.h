@@ -38,11 +38,12 @@ public:
     ~Packet();
     void sendPacket();
     static unsigned short crc16(const unsigned char *buf, unsigned int len);
-    void processData();
+    void processData(vector<byte> inputData);
 
 private:
 
     vector<byte> rawData;
+    vector<byte> message;
 
     template <typename T>
     void append(T data);
@@ -54,6 +55,22 @@ private:
      Word    = 2,
      Integer = 4
     };
+
+
+    enum States
+    {
+        DetectLength = 0,
+        Length1byte  = 2,
+        Length2byte  = 3,
+        Length3byte  = 4,
+        ReadMessage  = 5,
+        CalcCRC      = 6,
+        ValidateCRC  = 7,
+        GoodPacket   = 8
+    };
+
+    States processState;
+
 
 };
 

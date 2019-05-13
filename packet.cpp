@@ -54,7 +54,7 @@ const unsigned short crc16_tab[] = { 0x0000, 0x1021, 0x2042, 0x3063, 0x4084,
         0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0 };
 }
 
-Packet::Packet()
+Packet::Packet():processState(DetectLength)
 {
 
 
@@ -107,71 +107,66 @@ unsigned short Packet::crc16(const unsigned char *buf, unsigned int len)
     return cksum;
 }
 
-void Packet::processData(QByteArray data)
+void Packet::processData(vector<byte> inputData)
 {
-    QVector<QByteArray> decodedPackets;
+    bool done = false
+    unsigned packetLength = 0;
+    unsigned offset = 0;
+    while(!done)
+    {
+        switch(processState)
+        {
+            case DetectLength:
+            {
+                auto firstByte = static_cast<unsigned char>(inputData[0]);
 
-    for(unsigned char rx_data: data) {
-        mRxTimer = mByteTimeout;
+                if((firstByte >= Length1byte) && (firstByte <= Length3byte))
+                {
+                    processState = static_cast<States>(firstByte);
+                }
+                else
+                {
+                    done = true;  // could not calculate packet length
+                }
 
-        unsigned int data_len = mRxWritePtr - mRxReadPtr;
+            }
+            break;
 
-        // Out of space (should not happen)
-        if (data_len >= mBufferLen) {
-            mRxWritePtr = 0;
-            mRxReadPtr = 0;
-            mBytesLeft = 0;
-            mRxBuffer[mRxWritePtr++] = rx_data;
-            continue;
-        }
+            case Length3byte:
+                 packetLength = static_cast<unsigned>(inputData[1]) << static_cast<unsigned>(16);        // 1, 2, 3 if Length Starts here
+                 offset++;
 
-        // Everything has to be aligned, so shift buffer if we are out of space.
-        // (as opposed to using a circular buffer)
-        if (mRxWritePtr >= mBufferLen) {
-            memmove(mRxBuffer, mRxBuffer + mRxReadPtr, data_len);
-            mRxReadPtr = 0;
-            mRxWritePtr = data_len;
-        }
+            case Length2byte:
+                 packetLength |= static_cast<unsigned>(inputData[1+offset]) << static_cast<unsigned>(8); // 1, 2 if Length Starts here
+                 offset++;
 
-        mRxBuffer[mRxWritePtr++] = rx_data;
-        data_len++;
+            case Length1byte:
+                 packetLength |= static_cast<unsigned>(inputData[1+offset]);      // 1  if Length Starts here
+                 break;
 
-        if (mBytesLeft > 1) {
-            mBytesLeft--;
-            continue;
-        }
+            case ReadMessage:
+                 if(inputData.size() <  packetLength)
+                 {
+                     done = true;  // not enough data for packet length
+                 }
+                 else
+                 {
+                     message = vector<byte>(begin(inputData)+ 2 + offset, begin(inputData)+packetLength);
+                 }
+                 break;
 
-        // Try decoding the packet at various offsets until it succeeds, or
-        // until we run out of data.
-        for (;;) {
-            int res = try_decode_packet(mRxBuffer + mRxReadPtr, data_len,
-                                        &mBytesLeft, decodedPackets);
-
-            // More data is needed
-            if (res == -2) {
+            case CalcCRC:
                 break;
-            }
 
-            if (res > 0) {
-                data_len -= res;
-                mRxReadPtr += res;
-            } else if (res == -1) {
-                // Something went wrong. Move pointer forward and try again.
-                mRxReadPtr++;
-                data_len--;
-            }
-        }
+            case ValidateCRC:
+                break;
 
-        // Nothing left, move pointers to avoid memmove
-        if (data_len == 0) {
-            mRxReadPtr = 0;
-            mRxWritePtr = 0;
+            case GoodPacket:
+                break;
         }
     }
 
-    for (QByteArray b: decodedPackets) {
-        emit packetReceived(b);
-    }
+
 }
 
 
