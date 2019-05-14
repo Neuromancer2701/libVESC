@@ -151,11 +151,12 @@ void Packet::processData(vector<byte> inputData)
                  }
                  else
                  {
-                     message = vector<byte>(begin(inputData)+ 2 + offset, begin(inputData)+packetLength);
+                     message = vector<byte>(begin(inputData) + 2 + offset, begin(inputData) + 2 + offset + packetLength);
                  }
                  break;
 
             case CalcCRC:
+                begin(inputData) + 2 + offset + packetLength
                 break;
 
             case ValidateCRC:
