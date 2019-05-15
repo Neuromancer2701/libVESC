@@ -65,44 +65,47 @@ Packet::~Packet()
 
 }
 
-void Packet::sendPacket(const QByteArray &data)
+void Packet::sendPacket(vector<byte> rawData)
 {
-    if (data.size() == 0 || data.size() > (int)mMaxPacketLen) {
+    if (rawData.empty()|| rawData.size() > maxPacketLength)
+    {
         return;
     }
 
-    QByteArray to_send;
-    unsigned int len_tot = data.size();
+    unsigned int len_tot = rawData.size();
+    sendData.clear();
 
-    if (len_tot <= 255) {
-        to_send.append((char)2);
-        to_send.append((char)len_tot);
-    } else if (len_tot <= 65535) {
-        to_send.append((char)3);
-        to_send.append((char)(len_tot >> 8));
-        to_send.append((char)(len_tot & 0xFF));
-    } else {
-        to_send.append((char)4);
-        to_send.append((char)((len_tot >> 16) & 0xFF));
-        to_send.append((char)((len_tot >> 8) & 0xFF));
-        to_send.append((char)(len_tot & 0xFF));
+    if (len_tot <= 255)
+    {
+        append(sendData, 2);
+        append(sendData, static_cast<unsigned char>(len_tot));
+    }
+    else if (len_tot <= 65535)
+    {
+        append(sendData, 3);
+        append(sendData, static_cast<unsigned short>(len_tot));
+    }
+    else
+    {
+        append(sendData, 4);
+        append(sendData, len_tot);
     }
 
-    unsigned short crc = crc16((const unsigned char*)data.data(), len_tot);
-
-    to_send.append(data);
-    to_send.append((char)(crc >> 8));
-    to_send.append((char)(crc & 0xFF));
-    to_send.append((char)3);
-
-    emit dataToSend(to_send);
+    unsigned short crc = crc16(rawData);
+    sendData.insert(end(sendData), begin(rawData),end(rawData));
+    append(sendData, crc);
+    append(sendData, 3);
 }
 
-unsigned short Packet::crc16(const unsigned char *buf, unsigned int len)
+unsigned short Packet::crc16(vector<byte> payload)
 {
+    vector<unsigned char> convertedpayload;
+    transform(payload.begin(), payload.end(), convertedpayload.begin(), [] (byte c) { return static_cast<unsigned char>(c); });
+
     unsigned short cksum = 0;
-    for (unsigned int i = 0; i < len; i++) {
-        cksum = crc16_tab[(((cksum >> 8) ^ *buf++) & 0xFF)] ^ (cksum << 8);
+    for (auto& c:convertedpayload )
+    {
+        cksum = crc16_tab[(((cksum >> static_cast<unsigned>(8)) ^ c) & 0xFF)] ^ (cksum << static_cast<unsigned>(8));
     }
     return cksum;
 }
@@ -112,25 +115,25 @@ void Packet::processData(vector<byte> inputData)
     bool done = false
     unsigned packetLength = 0;
     unsigned offset = 0;
+    unsigned short packetCRC = 0;
     while(!done)
     {
         switch(processState)
         {
             case DetectLength:
-            {
-                auto firstByte = static_cast<unsigned char>(inputData[0]);
+                 {
+                    auto firstByte = static_cast<unsigned char>(inputData[0]);
 
-                if((firstByte >= Length1byte) && (firstByte <= Length3byte))
-                {
-                    processState = static_cast<States>(firstByte);
-                }
-                else
-                {
-                    done = true;  // could not calculate packet length
-                }
-
-            }
-            break;
+                    if((firstByte >= Length1byte) && (firstByte <= Length3byte))
+                    {
+                        processState = static_cast<States>(firstByte);
+                    }
+                    else
+                    {
+                        done = true;  // could not calculate packet length
+                    }
+                 }
+                 break;
 
             case Length3byte:
                  packetLength = static_cast<unsigned>(inputData[1]) << static_cast<unsigned>(16);        // 1, 2, 3 if Length Starts here
@@ -142,130 +145,100 @@ void Packet::processData(vector<byte> inputData)
 
             case Length1byte:
                  packetLength |= static_cast<unsigned>(inputData[1+offset]);      // 1  if Length Starts here
+                 processState = ReadMessage;
                  break;
 
             case ReadMessage:
-                 if(inputData.size() <  packetLength)
                  {
-                     done = true;  // not enough data for packet length
-                 }
-                 else
-                 {
-                     message = vector<byte>(begin(inputData) + 2 + offset, begin(inputData) + 2 + offset + packetLength);
+                    int total = packetLength + minBytes + offset + CRCSize;
+                    if(inputData.size() <  total)
+                    {
+                        done = true;  // not enough data for packet length
+                    }
+                    else
+                    {
+                        payload = vector<byte>(begin(inputData) + minBytes + offset, begin(inputData) + minBytes + offset + packetLength);
+                        processState = CalcCRC;
+                    }
                  }
                  break;
 
             case CalcCRC:
-                begin(inputData) + 2 + offset + packetLength
-                break;
+                  packetCRC  = static_cast<unsigned short>(inputData[packetLength + minBytes + offset]  << static_cast<unsigned>(8));
+                  packetCRC |= static_cast<unsigned short>(inputData[packetLength + minBytes + offset + 1]);
+                  processState = ValidateCRC;
+                  break;
 
             case ValidateCRC:
-                break;
+                 {
+                     auto payloadCRC = crc16(payload);
+
+                     if(payloadCRC == packetCRC)
+                     {
+                         processState = GoodPacket;
+                     }
+                     else
+                     {
+                         done = true;
+                     }
+                 }
+                 break;
 
             case GoodPacket:
-                break;
+                 // parse message tyoe here
+                 done = true;
+                 break;
         }
     }
 
 
 }
 
-
-int Packet::try_decode_packet(unsigned char *buffer, unsigned int in_len, int *bytes_left, vector<VByteArray> &decodedPackets)
+template<typename T>
+void Packet::append(vector<byte> message, T data)
 {
-    *bytes_left = 0;
+    unsigned size = sizeof(data);
 
-    if (in_len == 0) {
-        *bytes_left = 1;
-        return -2;
-    }
-
-    unsigned int data_start = buffer[0];
-    bool is_len_8b = buffer[0] == 2;
-    bool is_len_16b = buffer[0] == 3;
-    bool is_len_24b = buffer[0] == 4;
-
-    // No valid start byte
-    if (!is_len_8b && !is_len_16b && !is_len_24b) {
-        return -1;
-    }
-
-    // Not enough data to determine length
-    if (in_len < data_start) {
-        *bytes_left = data_start - in_len;
-        return -2;
-    }
-
-    unsigned int len = 0;
-
-    if (is_len_8b) {
-        len = (unsigned int)buffer[1];
-
-        // No support for zero length packets
-        if (len < 1) {
-            return -1;
-        }
-    } else if (is_len_16b) {
-        len = (unsigned int)buffer[1] << 8 | (unsigned int)buffer[2];
-
-        // A shorter packet should use less length bytes
-        if (len < 255) {
-            return -1;
-        }
-    } else if (is_len_24b) {
-        len = (unsigned int)buffer[1] << 16 |
-              (unsigned int)buffer[2] << 8 |
-              (unsigned int)buffer[3];
-
-        // A shorter packet should use less length bytes
-        if (len < 65535) {
-            return -1;
-        }
-    }
-
-    // Too long packet
-    if (len > mMaxPacketLen) {
-        return -1;
-    }
-
-    // Need more data to determine rest of packet
-    if (in_len < (len + data_start + 3)) {
-        *bytes_left = (len + data_start + 3) - in_len;
-        return -2;
-    }
-
-    // Invalid stop byte
-    if (buffer[data_start + len + 2] != 3) {
-        return -1;
-    }
-
-    unsigned short crc_calc = crc16(buffer + data_start, len);
-    unsigned short crc_rx = (unsigned short)buffer[data_start + len] << 8
-                          | (unsigned short)buffer[data_start + len + 1];
-
-    if (crc_calc == crc_rx) {
-        VByteArray res((const char*)(buffer + data_start), (int)len);
-        decodedPackets.push_back(res);
-        return len + data_start + 3;
-    } else {
-        return -1;
+    switch(size)
+    {
+        case Integer:
+             message.push_back(static_cast<byte>((data >> 24) & 0xFF));
+             message.push_back(static_cast<byte>((data >> 16) & 0xFF));
+        case Word:
+             message.push_back(static_cast<byte>((data >> 8) & 0xFF));
+        case Byte:
+             message.push_back(static_cast<byte>(data & 0xFF));
+             break;
     }
 }
 
 template<typename T>
-void Packet::append(T data)
+void Packet::pop(vector<byte>& message, T& data)
 {
-    unsigned bytes = sizeof(data);
-
-    switch(bytes)
+    unsigned size = sizeof(data);
+    unsigned counter = 0;
+    switch(size)
     {
         case Integer:
-             rawData.push_back(static_cast<byte>((data >> 24) & 0xFF));
-             rawData.push_back(static_cast<byte>((data >> 16) & 0xFF));
+             data  = static_cast<unsigned>(message[counter++]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(24);
+             data |= static_cast<unsigned>(message[counter++]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(16);
         case Word:
-             rawData.push_back(static_cast<byte>((data >> 8) & 0xFF));
+             data |= static_cast<unsigned>(message[counter++]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(8);
         case Byte:
-             rawData.push_back(static_cast<byte>(data & 0xFF));
+             data |= static_cast<unsigned>(message[counter++]) & static_cast<unsigned>(0xFF);
              break;
+
+        default:
+            // should never get here unless we pass in longs or doubles
+            break;
     }
+
+    message.erase(begin(message),begin(message) + counter);
 }
+
+void Packet::appendDouble32(vector<byte>& message, double number, double scale)
+{
+    append(message, static_cast<int>(round(number * scale)));
+}
+
+

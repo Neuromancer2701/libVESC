@@ -23,12 +23,15 @@
 
 
 #include <vector>
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <functional>
 
 using std::vector;
 using std::byte;
 using std::function;
+using std::round;
 
 class Packet
 {
@@ -36,18 +39,22 @@ class Packet
 public:
     Packet();
     ~Packet();
-    void sendPacket();
-    static unsigned short crc16(const unsigned char *buf, unsigned int len);
+    void sendPacket(vector<byte> rawData);
+    static unsigned short crc16(vector<byte> payload);
     void processData(vector<byte> inputData);
 
 private:
 
     vector<byte> rawData;
-    vector<byte> message;
+    vector<byte> payload;
+    vector<byte> sendData;
 
     template <typename T>
-    void append(T data);
+    void append(vector<byte> message, T data);
+    template<typename T>
+    void Packet::pop(vector<byte>& message, T& data);
 
+    void appendDouble32(vector<byte>& message, double number, double scale);
 
     enum SIZE
     {
@@ -67,6 +74,13 @@ private:
         CalcCRC      = 6,
         ValidateCRC  = 7,
         GoodPacket   = 8
+    };
+
+    enum constants
+    {
+        minBytes = 2,
+        CRCSize  = 2,
+        maxPacketLength = 512
     };
 
     States processState;
