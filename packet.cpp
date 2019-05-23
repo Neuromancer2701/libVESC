@@ -19,7 +19,8 @@
 
 #include "packet.h"
 #include <cstring>
-#include <QDebug>
+#include <g3log/g3log.hpp>
+
 
 namespace {
 // CRC Table
@@ -69,6 +70,7 @@ void Packet::sendPacket(vector<byte> rawData)
 {
     if (rawData.empty()|| rawData.size() > maxPacketLength)
     {
+        LOG(WARNING) << __FUNCTION__ << ": empty or over " << maxPacketLength;
         return;
     }
 
@@ -130,6 +132,7 @@ void Packet::processData(vector<byte> inputData)
                     }
                     else
                     {
+                        LOG(WARNING) << __FUNCTION__ << "first byte is not valid: " << firstByte;
                         done = true;  // could not calculate packet length
                     }
                  }
@@ -153,6 +156,7 @@ void Packet::processData(vector<byte> inputData)
                     int total = packetLength + minBytes + offset + CRCSize;
                     if(inputData.size() <  total)
                     {
+                        LOG(WARNING) << __FUNCTION__ << "Not enough data:"<< inputData.size() << " for total packet length: " << total;
                         done = true;  // not enough data for packet length
                     }
                     else
@@ -179,6 +183,7 @@ void Packet::processData(vector<byte> inputData)
                      }
                      else
                      {
+                         LOG(WARNING) << __FUNCTION__ << "CRC:"<< packetCRC << " Does not Match payload CRC: " << payloadCRC;
                          done = true;
                      }
                  }

@@ -4,7 +4,9 @@ project(libVESC)
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(.)
-include_directories(inc)
+include_directories(inc
+                    inc/g3log
+                    inc/libserial)
 
 add_executable(libVESC
         inc/datatypes.h
@@ -12,5 +14,8 @@ add_executable(libVESC
         commands.h
         packet.cpp
         packet.h
-        vbytearray.cpp
-        vbytearray.h)
+        )
+
+TARGET_LINK_LIBRARIES(libVESC
+        libserial_static
+        )

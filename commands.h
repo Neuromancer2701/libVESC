@@ -23,7 +23,7 @@
 
 #include "vbytearray.h"
 #include "datatypes.h"
-
+#include <libserial/SerialPort.h>
 
 class Commands
 {
