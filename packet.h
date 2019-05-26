@@ -28,8 +28,8 @@
 #include <cstddef>
 #include <functional>
 
-using std::vector;
-using std::byte;
+using std::vector;;
+using std::byte
 using std::function;
 using std::round;
 
@@ -43,18 +43,21 @@ public:
     static unsigned short crc16(vector<byte> payload);
     void processData(vector<byte> inputData);
 
+    template <typename T>
+    static void append(vector<byte>& message, T data);
+    template<typename T>
+    static void pop(vector<byte>& message, T& data);
+
+    static void appendDouble32(vector<byte>& message, double number, double scale);
+
+    static double popDouble16(vector<byte>& message, double scale);
+    static double popDouble32(vector<byte>& message, double scale);
+
 private:
 
     vector<byte> rawData;
     vector<byte> payload;
     vector<byte> sendData;
-
-    template <typename T>
-    void append(vector<byte> message, T data);
-    template<typename T>
-    void Packet::pop(vector<byte>& message, T& data);
-
-    void appendDouble32(vector<byte>& message, double number, double scale);
 
     enum SIZE
     {
@@ -80,7 +83,8 @@ private:
     {
         minBytes = 2,
         CRCSize  = 2,
-        maxPacketLength = 512
+        maxPacketLength = 512,
+        End = 3
     };
 
     States processState;

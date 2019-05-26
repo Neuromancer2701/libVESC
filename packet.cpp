@@ -94,7 +94,7 @@ void Packet::sendPacket(vector<byte> rawData)
     }
 
     unsigned short crc = crc16(rawData);
-    sendData.insert(end(sendData), begin(rawData),end(rawData));
+    sendData.insert(End(sendData), begin(rawData),End(rawData));
     append(sendData, crc);
     append(sendData, 3);
 }
@@ -118,6 +118,7 @@ void Packet::processData(vector<byte> inputData)
     unsigned packetLength = 0;
     unsigned offset = 0;
     unsigned short packetCRC = 0;
+    unsigned char  lastByte  = 0;
     while(!done)
     {
         switch(processState)
@@ -170,6 +171,7 @@ void Packet::processData(vector<byte> inputData)
             case CalcCRC:
                   packetCRC  = static_cast<unsigned short>(inputData[packetLength + minBytes + offset]  << static_cast<unsigned>(8));
                   packetCRC |= static_cast<unsigned short>(inputData[packetLength + minBytes + offset + 1]);
+                  lastByte   = static_cast<unsigned char>(inputData[packetLength  + minBytes + offset + 2]);  // just get last byte while we are here.
                   processState = ValidateCRC;
                   break;
 
@@ -177,13 +179,13 @@ void Packet::processData(vector<byte> inputData)
                  {
                      auto payloadCRC = crc16(payload);
 
-                     if(payloadCRC == packetCRC)
+                     if(payloadCRC == packetCRC && lastByte == End)
                      {
                          processState = GoodPacket;
                      }
                      else
                      {
-                         LOG(WARNING) << __FUNCTION__ << "CRC:"<< packetCRC << " Does not Match payload CRC: " << payloadCRC;
+                         LOG(WARNING) << __FUNCTION__ << "CRC:"<< packetCRC << " Does not Match payload CRC: " << payloadCRC << "Or Last Byte: "<< lastByte <<" does not equal " << End;
                          done = true;
                      }
                  }
@@ -200,7 +202,7 @@ void Packet::processData(vector<byte> inputData)
 }
 
 template<typename T>
-void Packet::append(vector<byte> message, T data)
+void Packet::append(vector<byte>& message, T data)
 {
     unsigned size = sizeof(data);
 
@@ -246,4 +248,19 @@ void Packet::appendDouble32(vector<byte>& message, double number, double scale)
     append(message, static_cast<int>(round(number * scale)));
 }
 
+double Packet::popDouble16(vector<byte>& message, double scale)
+{
+    short data = 0;
+    pop(message, data);
+
+    return static_cast<double_t >(data)/scale;
+}
+
+double Packet::popDouble32(vector<byte>& message, double scale)
+{
+    int data = 0;
+    pop(message, data);
+
+    return static_cast<double_t >(data)/scale;
+}
 

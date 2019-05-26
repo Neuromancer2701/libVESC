@@ -21,7 +21,7 @@
 #define COMMANDS_H
 
 
-#include "vbytearray.h"
+#include "packet.h"
 #include "datatypes.h"
 #include <libserial/SerialPort.h>
 
@@ -39,7 +39,7 @@ public:
     int getCanSendId();
 
 
-    void processPacket(VByteArray data);
+    void processPacket(vector<byte> &message);
 
     void getFwVersion();
     void getValues();
@@ -84,6 +84,8 @@ private:
     int mTimeoutDecAdc;
     int mTimeoutDecChuk;
     int mTimeoutPingCan;
+
+    MC_VALUES  motorControllerData;
 
 };
 

@@ -18,7 +18,6 @@
     */
 
 #include "commands.h"
-#include <QDebug>
 
 Commands::Commands()
 {
@@ -81,38 +80,39 @@ int Commands::getCanSendId()
     return mCanId;
 }
 
-void Commands::processPacket(VByteArray data)
+void Commands::processPacket(vector<byte> &message)
 {
 
-    auto id = static_cast<COMM_PACKET_ID>(data.vbPopFrontUint8());
+    unsigned char id = 0;
+    Packet::pop(message, id);
 
     switch (id)
     {
     case COMM_FW_VERSION:
     {
         mTimeoutFwVer = 0;
-        int fw_major = -1;
-        int fw_minor = -1;
+        char fw_major = -1;
+        char fw_minor = -1;
         string hw;
         vector<char> uuid;
         bool isPaired = false;
 
-        if (data.size() >= 2)
+        if (message.size() >= 2)
         {
-            fw_major = data.vbPopFrontInt8();
-            fw_minor = data.vbPopFrontInt8();
-            hw = data.vbPopFrontString();
+            Packet::pop(message, fw_major);
+            Packet::pop(message, fw_minor);
+            //hw = message.vbPopFrontString();
         }
 
-        if (data.size() >= 12)
+        if (message.size() >= 12)
         {
-            uuid = data.left(12);
-            data.erase(12);
+            //uuid = message.left(12);
+            //message.erase(12);
         }
 
-        if (data.size() >= 1)
+        if (message.size() >= 1)
         {
-            isPaired = data.vbPopFrontInt8();
+            //isPaired = message.vbPopFrontInt8();
         }
 
     } break;
@@ -122,84 +122,83 @@ void Commands::processPacket(VByteArray data)
         mTimeoutValues = 0;
         MC_VALUES values;
 
-        uint32_t
-        mask = 0xFFFFFFFF;
+        unsigned mask = 0xFFFFFFFF;
         if (id == COMM_GET_VALUES_SELECTIVE)
         {
-            mask = data.vbPopFrontUint32();
+            Packet::pop(message, mask);
         }
 
         if (mask & ((uint32_t)1 << 0))
         {
-            values.temp_mos = data.vbPopFrontDouble16(1e1);
+            values.temp_mos = Packet::popDouble16(message, 1e1);
         }
         if (mask & ((uint32_t)1 << 1))
         {
-            values.temp_motor = data.vbPopFrontDouble16(1e1);
+            values.temp_motor = Packet::popDouble16(message, 1e1);
         }
         if (mask & ((uint32_t)1 << 2))
         {
-            values.current_motor = data.vbPopFrontDouble32(1e2);
+            values.current_motor = Packet::popDouble32(message, 1e2);
         }
         if (mask & ((uint32_t)1 << 3))
         {
-            values.current_in = data.vbPopFrontDouble32(1e2);
+            values.current_in = Packet::popDouble32(message, 1e2);
         }
         if (mask & ((uint32_t)1 << 4))
         {
-            values.id = data.vbPopFrontDouble32(1e2);
+            values.id = Packet::popDouble32(message, 1e2);
         }
         if (mask & ((uint32_t)1 << 5))
         {
-            values.iq = data.vbPopFrontDouble32(1e2);
+            values.iq = Packet::popDouble32(message, 1e2);
         }
         if (mask & ((uint32_t)1 << 6))
         {
-            values.duty_now = data.vbPopFrontDouble16(1e3);
+            values.duty_now = Packet::popDouble16(message, 1e3);
         }
         if (mask & ((uint32_t)1 << 7))
         {
-            values.rpm = data.vbPopFrontDouble32(1e0);
+            values.rpm = Packet::popDouble32(message, 1e0);
         }
         if (mask & ((uint32_t)1 << 8))
         {
-            values.v_in = data.vbPopFrontDouble16(1e1);
+            values.v_in = Packet::popDouble16(message, 1e1);
         }
         if (mask & ((uint32_t)1 << 9))
         {
-            values.amp_hours = data.vbPopFrontDouble32(1e4);
+            values.amp_hours = Packet::popDouble32(message, 1e4);
         }
         if (mask & ((uint32_t)1 << 10))
         {
-            values.amp_hours_charged = data.vbPopFrontDouble32(1e4);
+            values.amp_hours_charged = Packet::popDouble32(message, 1e4);
         }
         if (mask & ((uint32_t)1 << 11))
         {
-            values.watt_hours = data.vbPopFrontDouble32(1e4);
+            values.watt_hours = Packet::popDouble32(message, 1e4);
         }
         if (mask & ((uint32_t)1 << 12))
         {
-            values.watt_hours_charged = data.vbPopFrontDouble32(1e4);
+            values.watt_hours_charged = Packet::popDouble32(message, 1e4);
         }
         if (mask & ((uint32_t)1 << 13))
         {
-            values.tachometer = data.vbPopFrontInt32();
+            Packet::pop(message, values.tachometer);
         }
         if (mask & ((uint32_t)1 << 14))
         {
-            values.tachometer_abs = data.vbPopFrontInt32();
+            Packet::pop(message, values.tachometer_abs);
         }
         if (mask & ((uint32_t)1 << 15))
         {
-            values.fault_code = (mc_fault_code) data.vbPopFrontInt8();
+            Packet::pop(message, values.fault_code);
             values.fault_str = faultToStr(values.fault_code);
         }
 
-        if (data.size() >= 4)
+        if (message.size() >= 4)
         {
             if (mask & ((uint32_t)1 << 16))
             {
-                values.position = data.vbPopFrontDouble32(1e6);
+                values.position = Packet::popDouble32(message, 1e6);
             }
         }
         else
@@ -207,11 +206,11 @@ void Commands::processPacket(VByteArray data)
             values.position = -1.0;
         }
 
-        if (data.size() >= 1)
+        if (message.size() >= 1)
         {
             if (mask & ((uint32_t)1 << 17))
             {
-                values.vesc_id = data.vbPopFrontUint8();
+                Packet::pop(message, values.vesc_id);
             }
         }
         else
@@ -219,80 +218,80 @@ void Commands::processPacket(VByteArray data)
             values.vesc_id = 255;
         }
 
-        if (data.size() >= 6)
+        if (message.size() >= 6)
         {
             if (mask & ((uint32_t)1 << 18))
             {
-                values.temp_mos_1 = data.vbPopFrontDouble16(1e1);
-                values.temp_mos_2 = data.vbPopFrontDouble16(1e1);
-                values.temp_mos_3 = data.vbPopFrontDouble16(1e1);
+                values.temp_mos_1 = Packet::popDouble16(message, 1e1);
+                values.temp_mos_2 = Packet::popDouble16(message, 1e1);
+                values.temp_mos_3 = Packet::popDouble16(message, 1e1);
             }
         }
     } break;
-
+#if 0
     case COMM_GET_IMU_DATA:
         {
         mTimeoutImuData = 0;
 
         IMU_VALUES values;
 
-        uint32_t mask = data.vbPopFrontUint16();
+        uint32_t mask = message.vbPopFrontUint16();
 
         if (mask & ((uint32_t)1 << 0)) {
-            values.roll = data.vbPopFrontDouble32Auto();
+            values.roll = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 1)) {
-            values.pitch = data.vbPopFrontDouble32Auto();
+            values.pitch = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 2)) {
-            values.yaw = data.vbPopFrontDouble32Auto();
+            values.yaw = message.vbPopFrontDouble32Auto();
         }
 
         if (mask & ((uint32_t)1 << 3)) {
-            values.accX = data.vbPopFrontDouble32Auto();
+            values.accX = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 4)) {
-            values.accY = data.vbPopFrontDouble32Auto();
+            values.accY = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 5)) {
-            values.accZ = data.vbPopFrontDouble32Auto();
+            values.accZ = message.vbPopFrontDouble32Auto();
         }
 
         if (mask & ((uint32_t)1 << 6)) {
-            values.gyroX = data.vbPopFrontDouble32Auto();
+            values.gyroX = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 7)) {
-            values.gyroY = data.vbPopFrontDouble32Auto();
+            values.gyroY = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 8)) {
-            values.gyroZ = data.vbPopFrontDouble32Auto();
+            values.gyroZ = message.vbPopFrontDouble32Auto();
         }
 
         if (mask & ((uint32_t)1 << 9)) {
-            values.magX = data.vbPopFrontDouble32Auto();
+            values.magX = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 10)) {
-            values.magY = data.vbPopFrontDouble32Auto();
+            values.magY = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 11)) {
-            values.magZ = data.vbPopFrontDouble32Auto();
+            values.magZ = message.vbPopFrontDouble32Auto();
         }
 
         if (mask & ((uint32_t)1 << 12)) {
-            values.q0 = data.vbPopFrontDouble32Auto();
+            values.q0 = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 13)) {
-            values.q1 = data.vbPopFrontDouble32Auto();
+            values.q1 = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 14)) {
-            values.q2 = data.vbPopFrontDouble32Auto();
+            values.q2 = message.vbPopFrontDouble32Auto();
         }
         if (mask & ((uint32_t)1 << 15)) {
-            values.q3 = data.vbPopFrontDouble32Auto();
+            values.q3 = message.vbPopFrontDouble32Auto();
         }
 
     } break;
-
+#endif
     default:
         break;
     }
