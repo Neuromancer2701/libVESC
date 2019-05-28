@@ -305,9 +305,7 @@ void Commands::getFwVersion()
 
     mTimeoutFwVer = mTimeoutCount;
 
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_FW_VERSION);
-
+    Packet(COMM_FW_VERSION).sendPacket();
 }
 
 void Commands::getValues()

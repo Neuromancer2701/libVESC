@@ -61,18 +61,26 @@ Packet::Packet():processState(DetectLength)
 
 }
 
+Packet::Packet(COMM_PACKET_ID Id)
+{
+    rawData.clear();
+    unsigned char packetId = Id;
+    append(rawData, packetId);
+}
+
+template<typename T>
+Packet::Packet(COMM_PACKET_ID Id, T data):Packet(Id)
+{
+    append(rawData, data);
+}
+
 Packet::~Packet()
 {
 
 }
 
-void Packet::sendPacket(vector<byte> rawData)
+void Packet::sendPacket(SerialPort vescPort)
 {
-    if (rawData.empty()|| rawData.size() > maxPacketLength)
-    {
-        LOG(WARNING) << __FUNCTION__ << ": empty or over " << maxPacketLength;
-        return;
-    }
 
     unsigned int len_tot = rawData.size();
     sendData.clear();
@@ -94,15 +102,20 @@ void Packet::sendPacket(vector<byte> rawData)
     }
 
     unsigned short crc = crc16(rawData);
-    sendData.insert(End(sendData), begin(rawData),End(rawData));
+    sendData.insert(end(sendData), begin(rawData),end(rawData));
     append(sendData, crc);
     append(sendData, 3);
+
+    vector<uint8_t > convertedSend;
+    transform(begin(sendData), end(sendData), begin(convertedSend), [] (byte c) { return static_cast<uint8_t >(c);});
+
+    vescPort.Write(convertedSend);
 }
 
 unsigned short Packet::crc16(vector<byte> payload)
 {
     vector<unsigned char> convertedpayload;
-    transform(payload.begin(), payload.end(), convertedpayload.begin(), [] (byte c) { return static_cast<unsigned char>(c); });
+    transform(begin(payload), end(payload), begin(convertedpayload), [] (byte c) { return static_cast<unsigned char>(c);});
 
     unsigned short cksum = 0;
     for (auto& c:convertedpayload )

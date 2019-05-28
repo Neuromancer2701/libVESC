@@ -21,25 +21,30 @@
 #define PACKET_H
 
 
-
+#include "datatypes.h"
 #include <vector>
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <functional>
+#include <SerialPort.h>
 
-using std::vector;;
-using std::byte
+using std::vector;
+using std::byte;
 using std::function;
 using std::round;
+using LibSerial::SerialPort;
 
 class Packet
 {
 
 public:
     Packet();
+    Packet(COMM_PACKET_ID  Id);
+    template <typename T>
+    Packet(COMM_PACKET_ID  Id, T data);
     ~Packet();
-    void sendPacket(vector<byte> rawData);
+    void sendPacket(SerialPort vescPort);
     static unsigned short crc16(vector<byte> payload);
     void processData(vector<byte> inputData);
 
