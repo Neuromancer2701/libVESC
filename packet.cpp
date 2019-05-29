@@ -74,12 +74,17 @@ Packet::Packet(COMM_PACKET_ID Id, T data):Packet(Id)
     append(rawData, data);
 }
 
+Packet::Packet(COMM_PACKET_ID Id, double number, double scale):Packet(Id)
+{
+    appendDouble32(rawData, number, scale);
+}
+
 Packet::~Packet()
 {
 
 }
 
-void Packet::sendPacket(SerialPort vescPort)
+vector<uint8_t> Packet::createPacket()
 {
 
     unsigned int len_tot = rawData.size();
@@ -109,7 +114,7 @@ void Packet::sendPacket(SerialPort vescPort)
     vector<uint8_t > convertedSend;
     transform(begin(sendData), end(sendData), begin(convertedSend), [] (byte c) { return static_cast<uint8_t >(c);});
 
-    vescPort.Write(convertedSend);
+    return convertedSend;
 }
 
 unsigned short Packet::crc16(vector<byte> payload)
@@ -127,7 +132,7 @@ unsigned short Packet::crc16(vector<byte> payload)
 
 void Packet::processData(vector<byte> inputData)
 {
-    bool done = false
+    bool done = false;
     unsigned packetLength = 0;
     unsigned offset = 0;
     unsigned short packetCRC = 0;

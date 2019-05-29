@@ -22,8 +22,6 @@
 
 
 #include "packet.h"
-#include "datatypes.h"
-#include <libserial/SerialPort.h>
 
 class Commands
 {
@@ -41,28 +39,18 @@ public:
 
     void processPacket(vector<byte> &message);
 
-    void getFwVersion();
-    void getValues();
-    void sendTerminalCmd(string cmd);
-    void sendTerminalCmdSync(string cmd);
-    void setDutyCycle(double dutyCycle);
-    void setCurrent(double current);
-    void setCurrentBrake(double current);
-    void setRpm(int rpm);
-    void setPos(double pos);
-    void setHandbrake(double current);
-    void samplePrint(debug_sampling_mode mode, int sample_len, int dec);
-    void reboot();
-    void sendAlive();
-    void getValuesSetup();
-    void setMcconfTemp(const MCCONF_TEMP &conf, bool is_setup, bool store, bool forward_can, bool divide_by_controllers, bool ack);
-    void getValuesSelective(unsigned int mask);
-    void getValuesSetupSelective(unsigned int mask);
-    void measureLinkageOpenloop(double current, double erpm_per_sec, double low_duty, double resistance);
-    void detectAllFoc(bool detect_can, double max_power_loss, double min_current_in, double max_current_in, double openloop_rpm, double sl_erpm);
-    void pingCan();
-    void disableAppOutput(int time_ms, bool fwdCan);
-    void getImuData(unsigned int mask);
+    void getFwVersion(SerialPort vescPort);
+    void getValues(SerialPort vescPort);
+    void setDutyCycle(double dutyCycle, SerialPort vescPort);
+    void setCurrent(double current, SerialPort vescPort);
+    void setCurrentBrake(double current, SerialPort vescPort);
+    void setRpm(int rpm, SerialPort vescPort);
+    void setPos(double pos, SerialPort vescPort);
+    void setHandbrake(double current, SerialPort vescPort);
+    void reboot(SerialPort vescPort);
+    void sendAlive(SerialPort vescPort);
+    void getValuesSelective(unsigned int mask, SerialPort vescPort);
+    void getImuData(unsigned int mask, SerialPort vescPort);
 
 private:
 
@@ -86,6 +74,7 @@ private:
     int mTimeoutPingCan;
 
     MC_VALUES  motorControllerData;
+    SerialPort serialPort;
 
 };
 

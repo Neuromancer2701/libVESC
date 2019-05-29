@@ -43,8 +43,9 @@ public:
     Packet(COMM_PACKET_ID  Id);
     template <typename T>
     Packet(COMM_PACKET_ID  Id, T data);
+    Packet(COMM_PACKET_ID  Id, double number, double scale);
     ~Packet();
-    void sendPacket(SerialPort vescPort);
+    vector<uint8_t> createPacket();
     static unsigned short crc16(vector<byte> payload);
     void processData(vector<byte> inputData);
 

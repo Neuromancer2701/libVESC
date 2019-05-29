@@ -297,18 +297,19 @@ void Commands::processPacket(vector<byte> &message)
     }
 }
 
-void Commands::getFwVersion()
+void Commands::getFwVersion(SerialPort vescPort)
 {
-    if (mTimeoutFwVer > 0) {
+    if (mTimeoutFwVer > 0)
+    {
         return;
     }
 
     mTimeoutFwVer = mTimeoutCount;
 
-    Packet(COMM_FW_VERSION).sendPacket();
+    vescPort.Write(Packet(COMM_FW_VERSION).createPacket());
 }
 
-void Commands::getValues()
+void Commands::getValues(SerialPort vescPort)
 {
     if (mTimeoutValues > 0) {
         return;
@@ -316,100 +317,50 @@ void Commands::getValues()
 
     mTimeoutValues = mTimeoutCount;
 
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_VALUES);
-
+    vescPort.Write(Packet(COMM_GET_VALUES).createPacket());
 }
 
-void Commands::sendTerminalCmd(string cmd)
+void Commands::setDutyCycle(double dutyCycle, SerialPort vescPort)
 {
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_TERMINAL_CMD);
-    vb.append(cmd.toLatin1());
-
+    vescPort.Write(Packet(COMM_SET_DUTY,dutyCycle, 1e5).createPacket());
 }
 
-void Commands::sendTerminalCmdSync(string cmd)
+void Commands::setCurrent(double current, SerialPort vescPort)
 {
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_TERMINAL_CMD_SYNC);
-    vb.append(cmd.toLatin1());
-
+    vescPort.Write(Packet(COMM_SET_CURRENT,current, 1e3).createPacket());
 }
 
-void Commands::setDutyCycle(double dutyCycle)
+void Commands::setCurrentBrake(double current, SerialPort vescPort)
 {
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_SET_DUTY);
-    vb.vbAppendDouble32(dutyCycle, 1e5);
-
+    vescPort.Write(Packet(COMM_SET_CURRENT_BRAKE,current, 1e3).createPacket());
 }
 
-void Commands::setCurrent(double current)
+void Commands::setRpm(int rpm, SerialPort vescPort)
 {
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_SET_CURRENT);
-    vb.vbAppendDouble32(current, 1e3);
-
+    vescPort.Write(Packet(COMM_SET_RPM, rpm).createPacket());
 }
 
-void Commands::setCurrentBrake(double current)
+void Commands::setPos(double pos, SerialPort vescPort)
 {
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_SET_CURRENT_BRAKE);
-    vb.vbAppendDouble32(current, 1e3);
-
+    vescPort.Write(Packet(COMM_SET_POS, pos, 1e6).createPacket());
 }
 
-void Commands::setRpm(int rpm)
+void Commands::setHandbrake(double current, SerialPort vescPort)
 {
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_SET_RPM);
-    vb.vbAppendInt32(rpm);
-
+    vescPort.Write(Packet(COMM_SET_HANDBRAKE, current, 1e3).createPacket());
 }
 
-void Commands::setPos(double pos)
+void Commands::reboot(SerialPort vescPort)
 {
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_SET_POS);
-    vb.vbAppendDouble32(pos, 1e6);
-
+    vescPort.Write(Packet(COMM_REBOOT).createPacket());
 }
 
-void Commands::setHandbrake(double current)
+void Commands::sendAlive(SerialPort vescPort)
 {
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_SET_HANDBRAKE);
-    vb.vbAppendDouble32(current, 1e3);
-
+    vescPort.Write(Packet(COMM_ALIVE).createPacket());
 }
 
-void Commands::samplePrint(debug_sampling_mode mode, int sample_len, int dec)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_SAMPLE_PRINT);
-    vb.vbAppendInt8(mode);
-    vb.vbAppendUint16(sample_len);
-    vb.vbAppendUint8(dec);
-
-}
-
-void Commands::reboot()
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_REBOOT);
-
-}
-
-void Commands::sendAlive()
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_ALIVE);
-
-}
-
-void Commands::getValuesSelective(unsigned int mask)
+void Commands::getValuesSelective(unsigned int mask, SerialPort vescPort)
 {
     if (mTimeoutValues > 0) {
         return;
@@ -417,83 +368,10 @@ void Commands::getValuesSelective(unsigned int mask)
 
     mTimeoutValues = mTimeoutCount;
 
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_VALUES_SELECTIVE);
-    vb.vbAppendUint32(mask);
-
+    vescPort.Write(Packet(COMM_GET_VALUES_SELECTIVE, mask).createPacket());
 }
 
-void Commands::getValuesSetupSelective(unsigned int mask)
-{
-    if (mTimeoutValuesSetup > 0) {
-        return;
-    }
-
-    mTimeoutValuesSetup = mTimeoutCount;
-
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_VALUES_SETUP_SELECTIVE);
-    vb.vbAppendUint32(mask);
-
-}
-
-void Commands::measureLinkageOpenloop(double current, double erpm_per_sec, double low_duty, double resistance)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_DETECT_MOTOR_FLUX_LINKAGE_OPENLOOP);
-    vb.vbAppendDouble32(current, 1e3);
-    vb.vbAppendDouble32(erpm_per_sec, 1e3);
-    vb.vbAppendDouble32(low_duty, 1e3);
-    vb.vbAppendDouble32(resistance, 1e6);
-}
-
-void Commands::detectAllFoc(bool detect_can, double max_power_loss, double min_current_in,
-                            double max_current_in, double openloop_rpm, double sl_erpm)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_DETECT_APPLY_ALL_FOC);
-    vb.vbAppendInt8(detect_can);
-    vb.vbAppendDouble32(max_power_loss, 1e3);
-    vb.vbAppendDouble32(min_current_in, 1e3);
-    vb.vbAppendDouble32(max_current_in, 1e3);
-    vb.vbAppendDouble32(openloop_rpm, 1e3);
-    vb.vbAppendDouble32(sl_erpm, 1e3);
-}
-
-void Commands::pingCan()
-{
-    if (mTimeoutPingCan > 0) {
-        return;
-    }
-
-    mTimeoutPingCan = 500;
-
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_PING_CAN);
-}
-
-/**
- * @brief Commands::disableAppOutput
- * Disable output from apps for a specified amount of time. No ack
- * is sent back.
- *
- * @param time_ms
- * 0: Enable output now
- * -1: Disable forever
- * >0: Amount of milliseconds to disable output
- *
- * @param fwdCan
- * Broadcast the command on the CAN-bus, to affect all VESCs.
- */
-void Commands::disableAppOutput(int time_ms, bool fwdCan)
-{
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_APP_DISABLE_OUTPUT);
-    vb.vbAppendInt8(fwdCan);
-    vb.vbAppendInt32(time_ms);
-}
-
-void Commands::getImuData(unsigned int mask)
+void Commands::getImuData(unsigned int mask, SerialPort vescPort)
 {
     if (mTimeoutImuData > 0) {
         return;
@@ -501,10 +379,7 @@ void Commands::getImuData(unsigned int mask)
 
     mTimeoutImuData = mTimeoutCount;
 
-    VByteArray vb;
-    vb.vbAppendInt8(COMM_GET_IMU_DATA);
-    vb.vbAppendUint16(mask);
-
+    vescPort.Write(Packet(COMM_GET_IMU_DATA, static_cast<unsigned short>(mask)).createPacket());
 }
 
 string Commands::faultToStr(mc_fault_code fault)
