@@ -19,7 +19,18 @@ public:
     void FindandMapMotorControllers();
 
 
-    map<string,SerialPort> wheels;
+    map<int,string> wheel_ports;
+
+
+private:
+
+    enum wheel_ids
+    {
+        left_back    = 100,
+        right_back   = 200,
+        left_front   = 300,
+        right_front  = 400
+    };
 
 };
 

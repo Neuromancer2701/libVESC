@@ -118,9 +118,9 @@ void Commands::processPacket(vector<byte> &message)
     } break;
 
     case COMM_GET_VALUES:
-    case COMM_GET_VALUES_SELECTIVE: {
+    case COMM_GET_VALUES_SELECTIVE:
+        {
         mTimeoutValues = 0;
-        MC_VALUES values;
 
         unsigned mask = 0xFFFFFFFF;
         if (id == COMM_GET_VALUES_SELECTIVE)
@@ -128,103 +128,103 @@ void Commands::processPacket(vector<byte> &message)
             Packet::pop(message, mask);
         }
 
-        if (mask & ((uint32_t)1 << 0))
+        if ((mask & MC_TEMP_MOS) == MC_TEMP_MOS)
         {
-            values.temp_mos = Packet::popDouble16(message, 1e1);
+            motorControllerData.temp_mos = Packet::popDouble16(message, 1e1);
         }
-        if (mask & ((uint32_t)1 << 1))
+        if ((mask & MC_TEMP_MOTOR) == MC_TEMP_MOTOR)
         {
-            values.temp_motor = Packet::popDouble16(message, 1e1);
+            motorControllerData.temp_motor = Packet::popDouble16(message, 1e1);
         }
-        if (mask & ((uint32_t)1 << 2))
+        if ((mask & MC_CURR_MOTOR) == MC_CURR_MOTOR)
         {
-            values.current_motor = Packet::popDouble32(message, 1e2);
+            motorControllerData.current_motor = Packet::popDouble32(message, 1e2);
         }
-        if (mask & ((uint32_t)1 << 3))
+        if ((mask & MC_CURR_IN) == MC_CURR_IN)
         {
-            values.current_in = Packet::popDouble32(message, 1e2);
+            motorControllerData.current_in = Packet::popDouble32(message, 1e2);
         }
-        if (mask & ((uint32_t)1 << 4))
+        if ((mask & MC_ID) == MC_ID)
         {
-            values.id = Packet::popDouble32(message, 1e2);
+            motorControllerData.id = Packet::popDouble32(message, 1e2);
         }
-        if (mask & ((uint32_t)1 << 5))
+        if ((mask & MC_IQ) == MC_IQ)
         {
-            values.iq = Packet::popDouble32(message, 1e2);
+            motorControllerData.iq = Packet::popDouble32(message, 1e2);
         }
-        if (mask & ((uint32_t)1 << 6))
+        if ((mask & MC_DUTY_NOW) == MC_DUTY_NOW)
         {
-            values.duty_now = Packet::popDouble16(message, 1e3);
+            motorControllerData.duty_now = Packet::popDouble16(message, 1e3);
         }
-        if (mask & ((uint32_t)1 << 7))
+        if ((mask & MC_RPM) == MC_RPM)
         {
-            values.rpm = Packet::popDouble32(message, 1e0);
+            motorControllerData.rpm = Packet::popDouble32(message, 1e0);
         }
-        if (mask & ((uint32_t)1 << 8))
+        if ((mask & MC_V_IN) == MC_V_IN)
         {
-            values.v_in = Packet::popDouble16(message, 1e1);
+            motorControllerData.v_in = Packet::popDouble16(message, 1e1);
         }
-        if (mask & ((uint32_t)1 << 9))
+        if ((mask & MC_AMP_HRS) == MC_AMP_HRS)
         {
-            values.amp_hours = Packet::popDouble32(message, 1e4);
+            motorControllerData.amp_hours = Packet::popDouble32(message, 1e4);
         }
-        if (mask & ((uint32_t)1 << 10))
+        if ((mask & MC_AMP_HRS_CH) == MC_AMP_HRS_CH)
         {
-            values.amp_hours_charged = Packet::popDouble32(message, 1e4);
+            motorControllerData.amp_hours_charged = Packet::popDouble32(message, 1e4);
         }
-        if (mask & ((uint32_t)1 << 11))
+        if ((mask & MC_WATT_HRS) == MC_WATT_HRS)
         {
-            values.watt_hours = Packet::popDouble32(message, 1e4);
+            motorControllerData.watt_hours = Packet::popDouble32(message, 1e4);
         }
-        if (mask & ((uint32_t)1 << 12))
+        if ((mask & MC_WATT_HRS_CH) == MC_WATT_HRS_CH)
         {
-            values.watt_hours_charged = Packet::popDouble32(message, 1e4);
+            motorControllerData.watt_hours_charged = Packet::popDouble32(message, 1e4);
         }
-        if (mask & ((uint32_t)1 << 13))
+        if ((mask & MC_TACH) == MC_TACH)
         {
-            Packet::pop(message, values.tachometer);
+            Packet::pop(message, motorControllerData.tachometer);
         }
-        if (mask & ((uint32_t)1 << 14))
+        if ((mask & MC_TACH_ABS) == MC_TACH_ABS)
         {
-            Packet::pop(message, values.tachometer_abs);
+            Packet::pop(message, motorControllerData.tachometer_abs);
         }
-        if (mask & ((uint32_t)1 << 15))
+        if ((mask & MC_FAULT_CODE) == MC_FAULT_CODE)
         {
-            Packet::pop(message, values.fault_code);
-            values.fault_str = faultToStr(values.fault_code);
+            Packet::pop(message, motorControllerData.fault_code);
+            motorControllerData.fault_str = faultToStr(motorControllerData.fault_code);
         }
 
         if (message.size() >= 4)
         {
-            if (mask & ((uint32_t)1 << 16))
+            if ((mask & MC_POSITION) == MC_POSITION)
             {
-                values.position = Packet::popDouble32(message, 1e6);
+                motorControllerData.position = Packet::popDouble32(message, 1e6);
             }
         }
         else
         {
-            values.position = -1.0;
+            motorControllerData.position = -1.0;
         }
 
         if (message.size() >= 1)
         {
-            if (mask & ((uint32_t)1 << 17))
+            if ((mask & MC_VESC_ID) == MC_VESC_ID)
             {
-                Packet::pop(message, values.vesc_id);
+                Packet::pop(message, motorControllerData.vesc_id);
             }
         }
         else
         {
-            values.vesc_id = 255;
+            motorControllerData.vesc_id = 255;
         }
 
         if (message.size() >= 6)
         {
-            if (mask & ((uint32_t)1 << 18))
+            if ((mask & MC_TEMP_MOS_123) == MC_TEMP_MOS_123)
             {
-                values.temp_mos_1 = Packet::popDouble16(message, 1e1);
-                values.temp_mos_2 = Packet::popDouble16(message, 1e1);
-                values.temp_mos_3 = Packet::popDouble16(message, 1e1);
+                motorControllerData.temp_mos_1 = Packet::popDouble16(message, 1e1);
+                motorControllerData.temp_mos_2 = Packet::popDouble16(message, 1e1);
+                motorControllerData.temp_mos_3 = Packet::popDouble16(message, 1e1);
             }
         }
     } break;
@@ -311,12 +311,6 @@ void Commands::getFwVersion(SerialPort vescPort)
 
 void Commands::getValues(SerialPort vescPort)
 {
-    if (mTimeoutValues > 0) {
-        return;
-    }
-
-    mTimeoutValues = mTimeoutCount;
-
     vescPort.Write(Packet(COMM_GET_VALUES).createPacket());
 }
 
@@ -362,12 +356,6 @@ void Commands::sendAlive(SerialPort vescPort)
 
 void Commands::getValuesSelective(unsigned int mask, SerialPort vescPort)
 {
-    if (mTimeoutValues > 0) {
-        return;
-    }
-
-    mTimeoutValues = mTimeoutCount;
-
     vescPort.Write(Packet(COMM_GET_VALUES_SELECTIVE, mask).createPacket());
 }
 
@@ -407,4 +395,8 @@ string Commands::faultToStr(mc_fault_code fault)
     case FAULT_CODE_UNBALANCED_CURRENTS: return "FAULT_CODE_UNBALANCED_CURRENTS";
     default: return "Unknown fault";
     }
+}
+
+ MC_VALUES &Commands::getMotorControllerData() {
+    return motorControllerData;
 }

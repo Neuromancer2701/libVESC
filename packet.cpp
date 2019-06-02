@@ -61,7 +61,7 @@ Packet::Packet():processState(DetectLength)
 
 }
 
-Packet::Packet(COMM_PACKET_ID Id)
+Packet::Packet(COMM_PACKET_ID Id):Packet()
 {
     rawData.clear();
     unsigned char packetId = Id;
@@ -179,8 +179,8 @@ void Packet::processData(vector<byte> inputData)
                         done = true;  // not enough data for packet length
                     }
                     else
-                    {
-                        payload = vector<byte>(begin(inputData) + minBytes + offset, begin(inputData) + minBytes + offset + packetLength);
+                    {   auto start = begin(inputData) + minBytes + offset;
+                        payload = vector<byte>(start, start + packetLength);
                         processState = CalcCRC;
                     }
                  }
@@ -210,7 +210,6 @@ void Packet::processData(vector<byte> inputData)
                  break;
 
             case GoodPacket:
-                 // parse message tyoe here
                  done = true;
                  break;
         }
@@ -282,3 +281,6 @@ double Packet::popDouble32(vector<byte>& message, double scale)
     return static_cast<double_t >(data)/scale;
 }
 
+vector<byte> &Packet::getPayload()  {
+    return payload;
+}
