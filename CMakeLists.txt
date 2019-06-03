@@ -16,7 +16,9 @@ add_library(VESC
         packet.h
         commands.cpp
         commands.h
-        Vesc.cpp Vesc.h inc/utils.h)
+        Vesc.cpp
+        Vesc.h
+        inc/utils.h)
 
 
 # use with furture executable
