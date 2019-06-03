@@ -59,8 +59,14 @@ public:
     static double popDouble16(vector<byte>& message, double scale);
     static double popDouble32(vector<byte>& message, double scale);
 
-private:
+    vector<byte> &getPayload();
 
+    static long getminTotalPacketSize(){ return static_cast<long>(minTotalPacketSize);}
+
+    bool isGoodPacket(){return processState == GoodPacket;}
+
+
+private:
     vector<byte> rawData;
     vector<byte> payload;
     vector<byte> sendData;
@@ -90,7 +96,8 @@ private:
         minBytes = 2,
         CRCSize  = 2,
         maxPacketLength = 512,
-        End = 3
+        End = 3,
+        minTotalPacketSize = 6
     };
 
     States processState;
