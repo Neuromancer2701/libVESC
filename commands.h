@@ -52,6 +52,7 @@ public:
     void getValuesSelective(unsigned int mask, SerialPort vescPort);
     void getImuData(unsigned int mask, SerialPort vescPort);
     Packet getVescIDpacket() {return Packet(COMM_GET_VALUES_SELECTIVE, MC_VESC_ID);}
+
     MC_VALUES &getMotorControllerData();
 
 private:

@@ -5,9 +5,10 @@
 #ifndef VESC_H
 #define VESC_H
 
-#include "commands.h"
+#include <string>
 #include <map>
 using std::map;
+using std::string;
 
 
 class Vesc

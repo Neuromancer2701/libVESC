@@ -99,8 +99,8 @@ void Commands::processPacket(vector<byte> &message)
 
         if (message.size() >= 2)
         {
-            Packet::pop(message, fw_major);
-            Packet::pop(message, fw_minor);
+            Packet::pop<char>(message, fw_major);
+            Packet::pop<char>(message, fw_minor);
             //hw = message.vbPopFrontString();
         }
 

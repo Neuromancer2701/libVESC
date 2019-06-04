@@ -2,15 +2,17 @@
 // Created by root on 5/29/19.
 //
 
-#include "Vesc.h"
-#include "utils.h"
-#include "SerialPortConstants.h"
+
 #include <string_view>
 #include <string>
 #include <filesystem>
 #include <chrono>
 #include <thread>
 #include <g3log/g3log.hpp>
+#include "Vesc.h"
+#include "utils.h"
+#include "SerialPortConstants.h"
+#include "commands.h"
 
 using std::literals::operator""sv;
 using std::to_string;
@@ -89,8 +91,15 @@ void Vesc::FindandMapMotorControllers()
                                  wheel_ports[id] = devicePath.string();
                                  break;
 
+
                         }
+
                     }
+                    else
+                    {
+                        LOG(WARNING) << __FUNCTION__ << "Packet not good.";
+                    }
+                    testport.Close();
                 }
             }
         }
