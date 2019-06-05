@@ -41,18 +41,32 @@ class Packet
 public:
     Packet();
     Packet(COMM_PACKET_ID  Id);
-    template <typename T>
-    Packet(COMM_PACKET_ID  Id, T data);
+
+    Packet(COMM_PACKET_ID  Id, unsigned data);
+    Packet(COMM_PACKET_ID  Id, unsigned short data);
+    Packet(COMM_PACKET_ID  Id, unsigned  char data);
     Packet(COMM_PACKET_ID  Id, double number, double scale);
     ~Packet();
     vector<uint8_t> createPacket();
     static unsigned short crc16(vector<byte> payload);
     void processData(vector<byte> inputData);
 
-    template <typename T>
-    static void append(vector<byte>& message, T data);
-    template<typename T>
-    static void pop(vector<byte>& message, T& data);
+
+    static void append(vector<byte>& message, unsigned data);
+    static void append(vector<byte>& message, unsigned short data);
+    static void append(vector<byte>& message, unsigned char data);
+
+    static void append(vector<byte>& message, int data)   {append(message, static_cast<unsigned>(data));}
+    static void append(vector<byte>& message, short data) {append(message, static_cast<unsigned short>(data));}
+    static void append(vector<byte>& message, char data)  {append(message, static_cast<unsigned char>(data));}
+
+    static void pop(vector<byte>& message, unsigned & data);
+    static void pop(vector<byte>& message, unsigned short & data);
+    static void pop(vector<byte>& message, unsigned char & data);
+
+    static void pop(vector<byte>& message, int & data);
+    static void pop(vector<byte>& message, short & data);
+    static void pop(vector<byte>& message, char & data);
 
     static void appendDouble32(vector<byte>& message, double number, double scale);
 

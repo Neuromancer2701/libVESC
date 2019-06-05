@@ -51,7 +51,7 @@ public:
     void sendAlive(SerialPort vescPort);
     void getValuesSelective(unsigned int mask, SerialPort vescPort);
     void getImuData(unsigned int mask, SerialPort vescPort);
-    Packet getVescIDpacket() {return Packet(COMM_GET_VALUES_SELECTIVE, MC_VESC_ID);}
+    Packet getVescIDpacket() {return Packet(COMM_GET_VALUES_SELECTIVE, static_cast<unsigned>(MC_VESC_ID));}
 
     MC_VALUES &getMotorControllerData();
 

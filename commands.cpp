@@ -99,8 +99,8 @@ void Commands::processPacket(vector<byte> &message)
 
         if (message.size() >= 2)
         {
-            Packet::pop<char>(message, fw_major);
-            Packet::pop<char>(message, fw_minor);
+            Packet::pop(message, fw_major);
+            Packet::pop(message, fw_minor);
             //hw = message.vbPopFrontString();
         }
 
@@ -190,7 +190,9 @@ void Commands::processPacket(vector<byte> &message)
         }
         if ((mask & MC_FAULT_CODE) == MC_FAULT_CODE)
         {
-            Packet::pop(message, motorControllerData.fault_code);
+            unsigned char temp = 0;
+            Packet::pop(message, temp);
+            motorControllerData.fault_code = static_cast<mc_fault_code>(temp);
             motorControllerData.fault_str = faultToStr(motorControllerData.fault_code);
         }
 
@@ -331,7 +333,7 @@ void Commands::setCurrentBrake(double current, SerialPort vescPort)
 
 void Commands::setRpm(int rpm, SerialPort vescPort)
 {
-    vescPort.Write(Packet(COMM_SET_RPM, rpm).createPacket());
+    vescPort.Write(Packet(COMM_SET_RPM, static_cast<unsigned>(rpm)).createPacket());
 }
 
 void Commands::setPos(double pos, SerialPort vescPort)

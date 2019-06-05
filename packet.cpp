@@ -68,8 +68,18 @@ Packet::Packet(COMM_PACKET_ID Id):Packet()
     append(rawData, packetId);
 }
 
-template<typename T>
-Packet::Packet(COMM_PACKET_ID Id, T data):Packet(Id)
+
+Packet::Packet(COMM_PACKET_ID Id, unsigned data):Packet(Id)
+{
+    append(rawData, data);
+}
+
+Packet::Packet(COMM_PACKET_ID Id, unsigned  short data):Packet(Id)
+{
+    append(rawData, data);
+}
+
+Packet::Packet(COMM_PACKET_ID Id, unsigned  char data):Packet(Id)
 {
     append(rawData, data);
 }
@@ -218,47 +228,77 @@ void Packet::processData(vector<byte> inputData)
 
 }
 
-template<typename T>
-void Packet::append(vector<byte>& message, T data)
-{
-    unsigned size = sizeof(data);
 
-    switch(size)
-    {
-        case Integer:
-             message.push_back(static_cast<byte>((data >> 24) & 0xFF));
-             message.push_back(static_cast<byte>((data >> 16) & 0xFF));
-        case Word:
-             message.push_back(static_cast<byte>((data >> 8) & 0xFF));
-        case Byte:
-             message.push_back(static_cast<byte>(data & 0xFF));
-             break;
-    }
+void Packet::append(vector<byte>& message, unsigned data)
+{
+
+     message.push_back(static_cast<byte>((data >> 24) & 0xFF));
+     message.push_back(static_cast<byte>((data >> 16) & 0xFF));
+     append(message, static_cast<unsigned short>(data));
 }
 
-template<typename T>
-void Packet::pop(vector<byte>& message, T& data)
+void Packet::append(vector<byte>& message, unsigned short data)
 {
-    unsigned size = sizeof(data);
-    unsigned counter = 0;
-    switch(size)
-    {
-        case Integer:
-             data  = static_cast<unsigned>(message[counter++]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(24);
-             data |= static_cast<unsigned>(message[counter++]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(16);
-        case Word:
-             data |= static_cast<unsigned>(message[counter++]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(8);
-        case Byte:
-             data |= static_cast<unsigned>(message[counter++]) & static_cast<unsigned>(0xFF);
-             break;
-
-        default:
-            // should never get here unless we pass in longs or doubles
-            break;
-    }
-
-    message.erase(begin(message),begin(message) + counter);
+    message.push_back(static_cast<byte>((data >> 8) & 0xFF));
+    append(message, static_cast<unsigned char>(data));
 }
+
+
+void Packet::append(vector<byte>& message, unsigned char data)
+{
+    message.push_back(static_cast<byte>(data & 0xFF));
+}
+
+
+
+void Packet::pop(vector<byte>& message, unsigned& data)
+{
+    data  = static_cast<unsigned>(message[0]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(24);
+    data |= static_cast<unsigned>(message[1]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(16);
+    message.erase(begin(message),begin(message) + 2);
+
+    unsigned short Word = 0;
+    pop(message, Word);
+    data |= static_cast<unsigned>(Word) & static_cast<unsigned>(0xFFFF);
+}
+
+
+void Packet::pop(vector<byte>& message, unsigned short& data)
+{
+    unsigned char Bytes[2];
+    pop(message, Bytes[0]);
+    pop(message, Bytes[1]);
+    data  = static_cast<unsigned short>(Bytes[0]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(8);
+    data |= static_cast<unsigned short>(Bytes[1]) & static_cast<unsigned>(0xFF);
+}
+
+void Packet::pop(vector<byte>& message, unsigned char& data)
+{
+    data = static_cast<unsigned>(message[0]) & static_cast<unsigned>(0xFF);
+    message.erase(begin(message),begin(message) + 1);
+}
+
+void Packet::pop(vector<byte> &message, int &data)
+{
+    unsigned local = 0;
+    pop(message, local);
+    data = static_cast<int>(local);
+}
+
+void Packet::pop(vector<byte> &message, short &data)
+{
+    unsigned short local = 0;
+    pop(message, local);
+    data = static_cast<short>(local);
+}
+
+void Packet::pop(vector<byte> &message, char &data)
+{
+    unsigned char local = 0;
+    pop(message, local);
+    data = static_cast<char>(local);
+}
+
 
 void Packet::appendDouble32(vector<byte>& message, double number, double scale)
 {
@@ -270,7 +310,7 @@ double Packet::popDouble16(vector<byte>& message, double scale)
     short data = 0;
     pop(message, data);
 
-    return static_cast<double_t >(data)/scale;
+    return static_cast<double >(data)/scale;
 }
 
 double Packet::popDouble32(vector<byte>& message, double scale)
@@ -278,9 +318,10 @@ double Packet::popDouble32(vector<byte>& message, double scale)
     int data = 0;
     pop(message, data);
 
-    return static_cast<double_t >(data)/scale;
+    return static_cast<double >(data)/scale;
 }
 
-vector<byte> &Packet::getPayload()  {
+vector<byte> &Packet::getPayload()
+{
     return payload;
 }
