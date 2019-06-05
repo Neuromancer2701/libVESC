@@ -253,8 +253,8 @@ void Packet::append(vector<byte>& message, unsigned char data)
 
 void Packet::pop(vector<byte>& message, unsigned& data)
 {
-    data  = static_cast<unsigned>(message[0]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(24);
-    data |= static_cast<unsigned>(message[1]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(16);
+    data  = (static_cast<unsigned>(message[0]) & static_cast<unsigned>(0xFF)) << static_cast<unsigned>(24);
+    data |= (static_cast<unsigned>(message[1]) & static_cast<unsigned>(0xFF)) << static_cast<unsigned>(16);
     message.erase(begin(message),begin(message) + 2);
 
     unsigned short Word = 0;
@@ -268,7 +268,7 @@ void Packet::pop(vector<byte>& message, unsigned short& data)
     unsigned char Bytes[2];
     pop(message, Bytes[0]);
     pop(message, Bytes[1]);
-    data  = static_cast<unsigned short>(Bytes[0]) & static_cast<unsigned>(0xFF) << static_cast<unsigned>(8);
+    data  = (static_cast<unsigned short>(Bytes[0]) & static_cast<unsigned short>(0xFF)) << static_cast<unsigned>(8);
     data |= static_cast<unsigned short>(Bytes[1]) & static_cast<unsigned>(0xFF);
 }
 
