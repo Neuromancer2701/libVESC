@@ -102,27 +102,27 @@ vector<uint8_t> Packet::createPacket()
 
     if (len_tot <= 255)
     {
-        append(sendData, 2);
+        append(sendData, static_cast<unsigned char>(2));
         append(sendData, static_cast<unsigned char>(len_tot));
     }
     else if (len_tot <= 65535)
     {
-        append(sendData, 3);
+        append(sendData, static_cast<unsigned char>(3));
         append(sendData, static_cast<unsigned short>(len_tot));
     }
     else
     {
-        append(sendData, 4);
+        append(sendData, static_cast<unsigned char>(4));
         append(sendData, len_tot);
     }
 
     unsigned short crc = crc16(rawData);
     sendData.insert(end(sendData), begin(rawData),end(rawData));
     append(sendData, crc);
-    append(sendData, 3);
+    append(sendData, static_cast<unsigned char>(3));
 
     vector<uint8_t > convertedSend;
-    transform(begin(sendData), end(sendData), begin(convertedSend), [] (byte c) { return static_cast<uint8_t >(c);});
+    transform(begin(sendData), end(sendData), back_inserter(convertedSend), [] (auto c) { return static_cast<uint8_t >(c);});
 
     return convertedSend;
 }
@@ -130,7 +130,7 @@ vector<uint8_t> Packet::createPacket()
 unsigned short Packet::crc16(vector<byte> payload)
 {
     vector<unsigned char> convertedpayload;
-    transform(begin(payload), end(payload), begin(convertedpayload), [] (byte c) { return static_cast<unsigned char>(c);});
+    transform(begin(payload), end(payload), back_inserter(convertedpayload), [] (auto c) { return static_cast<unsigned char>(c);});
 
     unsigned short cksum = 0;
     for (auto& c:convertedpayload )
@@ -197,11 +197,11 @@ void Packet::processData(vector<byte> inputData)
                  break;
 
             case CalcCRC:
-                  packetCRC  = static_cast<unsigned short>(inputData[packetLength + minBytes + offset]  << static_cast<unsigned>(8));
-                  packetCRC |= static_cast<unsigned short>(inputData[packetLength + minBytes + offset + 1]);
-                  lastByte   = static_cast<unsigned char>(inputData[packetLength  + minBytes + offset + 2]);  // just get last byte while we are here.
-                  processState = ValidateCRC;
-                  break;
+                 packetCRC  = (static_cast<unsigned short>(inputData[packetLength + minBytes + offset]) & static_cast<unsigned>(0xFF)) << static_cast<unsigned>(8);
+                 packetCRC |= static_cast<unsigned short>(inputData[packetLength + minBytes + offset + 1]) & static_cast<unsigned>(0xFF);
+                 lastByte   = static_cast<unsigned char>(inputData[packetLength  + minBytes + offset + 2]);  // just get last byte while we are here.
+                 processState = ValidateCRC;
+                 break;
 
             case ValidateCRC:
                  {

@@ -5,7 +5,6 @@
 
 #include <string_view>
 #include <string>
-#include <filesystem>
 #include <chrono>
 #include <thread>
 #include <g3log/g3log.hpp>
@@ -16,8 +15,7 @@
 
 using std::literals::operator""sv;
 using std::to_string;
-using std::filesystem::path;
-using std::filesystem::exists;
+
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
 using LibSerial::DataBuffer;
@@ -42,65 +40,66 @@ Vesc::~Vesc()
 
 void Vesc::FindandMapMotorControllers()
 {
-    auto portNumbers = utils::range(6);  // just search 0-5 for now
-    string device = "ttyACM";
+    SerialPort testport;
+    vector<string> serialPorts = testport.GetAvailableSerialPorts();
+    vector<string> filteredPorts;
+    copy_if(begin(serialPorts), end(serialPorts), back_inserter(filteredPorts), [](auto s) { return s.find("ttyACM") != std::string::npos; });
+
     Commands cmd;
     Packet vescID = cmd.getVescIDpacket();
 
-    for(auto& number:portNumbers)
+    for(auto& port:filteredPorts)
     {
-        auto devicePath = static_cast<path>(string(devPath) + device + to_string(number));
-        if(exists(devicePath))
+        testport.Open(port);
+        if(testport.IsOpen())
         {
-            SerialPort testport(devicePath.string());
-            if(testport.IsOpen())
+            //testport.FlushIOBuffers();
+            testport.Write(vescID.createPacket());
+            sleep_ms(100);
+            int bytes = testport.GetNumberOfBytesAvailable();
+            while( bytes < Packet::getminTotalPacketSize())
             {
-                testport.FlushIOBuffers();
-                testport.Write(vescID.createPacket());
-                sleep_ms(100);
-                while(!testport.IsDataAvailable()){sleep_ms(25);}
+                sleep_ms(25);
+            }
 
-                DataBuffer  buffer;
-                testport.Read(buffer);
+            DataBuffer  buffer;
+            testport.Read(buffer,bytes);
 
-                if(buffer.size() < Packet::getminTotalPacketSize())
+            if(buffer.size() < Packet::getminTotalPacketSize())
+            {
+                testport.Close();
+                LOG(WARNING) << __FUNCTION__ << "Not enough data:"<< buffer.size() << " To process Packet. ";
+            }
+            else
+            {
+                vector<byte> convertedInput;
+                transform(begin(buffer), end(buffer), back_inserter(convertedInput), [] (uint8_t c) { return static_cast<byte>(c);});
+
+                Packet incoming;
+                incoming.processData(convertedInput);
+                if(incoming.isGoodPacket())
                 {
-                    testport.Close();
-                    LOG(WARNING) << __FUNCTION__ << "Not enough data:"<< buffer.size() << " To process Packet. ";
+                    cmd.processPacket(incoming.getPayload());
+                    auto id = cmd.getMotorControllerData().vesc_id;
+
+                    switch(id)
+                    {
+#if NOT_IMPLEMENTED
+                        case left_front:
+                        case right_front:
+#endif
+                        case left_back:
+                        case right_back:
+                             wheel_ports[id] = port;
+                             break;
+                    }
+
                 }
                 else
                 {
-                    vector<byte> convertedInput;
-                    transform(begin(buffer), end(buffer), begin(convertedInput), [] (uint8_t c) { return static_cast<byte>(c);});
-
-                    Packet incoming;
-                    incoming.processData(convertedInput);
-                    if(incoming.isGoodPacket())
-                    {
-                        cmd.processPacket(incoming.getPayload());
-                        auto id = cmd.getMotorControllerData().vesc_id;
-
-                        switch(id)
-                        {
-#if NOT_IMPLEMENTED
-                            case left_front:
-                            case right_front:
-#endif
-                            case left_back:
-                            case right_back:
-                                 wheel_ports[id] = devicePath.string();
-                                 break;
-
-
-                        }
-
-                    }
-                    else
-                    {
-                        LOG(WARNING) << __FUNCTION__ << "Packet not good.";
-                    }
-                    testport.Close();
+                    LOG(WARNING) << __FUNCTION__ << "Packet not good.";
                 }
+                testport.Close();
             }
         }
     }
