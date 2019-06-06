@@ -212,7 +212,9 @@ void Commands::processPacket(vector<byte> &message)
         {
             if ((mask & MC_VESC_ID) == MC_VESC_ID)
             {
-                Packet::pop(message, motorControllerData.vesc_id);
+                unsigned char temp = 0;
+                Packet::pop(message, temp);
+                motorControllerData.vesc_id = static_cast<int>(temp);
             }
         }
         else
