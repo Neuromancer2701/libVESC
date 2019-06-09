@@ -23,7 +23,6 @@ add_library(VESC
 
 
 TARGET_LINK_LIBRARIES(VESC
-        stdc++fs
         libserial.so
         libg3logger.so )
 

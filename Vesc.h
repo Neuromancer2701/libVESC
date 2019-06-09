@@ -7,6 +7,8 @@
 
 #include <string>
 #include <map>
+#include "commands.h"
+
 using std::map;
 using std::string;
 
@@ -18,10 +20,8 @@ public:
 
     virtual ~Vesc();
     void FindandMapMotorControllers();
-
-
-    map<int,string> wheel_ports;
-
+    void SetWheelsRPM(map<int, int> wheel_rpms);
+    void SetWheelsDuty(map<int, double> wheel_duty);
 
 private:
 
@@ -33,6 +33,15 @@ private:
         right_front  = 400
     };
 
+
+    Packet vesc_ID_p;
+    Packet keepAlive_p;
+
+    Packet selectmotorData_p;
+    Packet allmotorData_p;
+    Commands cmd;
+
+    map<int,string> wheel_ports;
 };
 
 
