@@ -22,8 +22,8 @@ public:
     void FindandMapMotorControllers();
     void SetWheelsRPM(map<int, int> wheel_rpms);
     void SetWheelsDuty(map<int, double> wheel_duty);
-
-private:
+    bool isTwoWheelDrive();
+    bool isFourWheelDrive();
 
     enum wheel_ids
     {
@@ -34,6 +34,8 @@ private:
     };
 
 
+private:
+
     Packet vesc_ID_p;
     Packet keepAlive_p;
 
@@ -42,6 +44,7 @@ private:
     Commands cmd;
 
     map<int,string> wheel_ports;
+    map<int,bool> wheel_found;
 };
 
 
