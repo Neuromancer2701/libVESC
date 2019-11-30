@@ -7,7 +7,6 @@
 #include <string>
 #include <chrono>
 #include <thread>
-#include <g3log/g3log.hpp>
 #include "Vesc.h"
 #include "utils.h"
 #include "SerialPortConstants.h"
@@ -61,7 +60,7 @@ void Vesc::SetWheelsRPM(map<int, int> wheel_rpms)
         }
         else
         {
-            LOG(WARNING) << "ID Not Found input RPM set data: " << id ;
+            //LOG(WARNING) << "ID Not Found input RPM set data: " << id ;
         }
 
         vescPort.Close();
@@ -80,7 +79,7 @@ void Vesc::SetWheelsDuty(map<int, double> wheel_duty)
         }
         else
         {
-            LOG(WARNING) << "ID Not Found input RPM set data: " << id ;
+            //LOG(WARNING) << "ID Not Found input RPM set data: " << id ;
         }
 
         vescPort.Close();
@@ -115,7 +114,7 @@ void Vesc::FindandMapMotorControllers()
 
             if(buffer.size() < Packet::getminTotalPacketSize())
             {
-                LOG(WARNING) << __FUNCTION__ << "Not enough data:"<< buffer.size() << " To process Packet. ";
+                //LOG(WARNING) << __FUNCTION__ << "Not enough data:"<< buffer.size() << " To process Packet. ";
             }
             else
             {
@@ -144,7 +143,7 @@ void Vesc::FindandMapMotorControllers()
                 }
                 else
                 {
-                    LOG(WARNING) << __FUNCTION__ << "Packet not good.";
+                    //LOG(WARNING) << __FUNCTION__ << "Packet not good.";
                 }
 
             }

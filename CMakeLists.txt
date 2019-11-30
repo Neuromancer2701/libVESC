@@ -2,11 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(VESC)
 
 set(CMAKE_CXX_STANDARD 17)
-
-include_directories(.)
 include_directories(inc
-                    inc/g3log
-                    inc/libserial)
+                    /usr/local/include/libserial)
 
 link_directories(/usr/local/lib/ ${PROJECT_SOURCE_DIR}/lib)
 
@@ -23,8 +20,7 @@ add_library(VESC
 
 
 TARGET_LINK_LIBRARIES(VESC
-        libserial.so
-        libg3logger.so )
+        libserial.so)
 
 
 #install (TARGETS VESC DESTINATION ${PROJECT_SOURCE_DIR}/lib)

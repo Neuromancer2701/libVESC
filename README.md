@@ -5,14 +5,17 @@ The plan is to use this library to communicate to multiple VESC units via USB in
 Maintained the license
 
 install these libs for support  
-https://github.com/crayzeewulf/libserial.git  
+https://github.com/crayzeewulf/libserial.git
+
+sudo apt update
+
+sudo apt install g++ git autogen autoconf build-essential cmake graphviz \
+                 libboost-dev libboost-test-dev libgtest-dev libtool \
+                 python-sip-dev doxygen python-sphinx pkg-config \
+                 python3-sphinx-rtd-theme
+                   
 ./compile.sh  
 make install
-
-https://github.com/KjellKod/g3log.git  
-mkdir build && cd build  
-cmake ..  
-make install -j 8  
 
 To suport C++17 filesystem  
 apt install g++-8 
