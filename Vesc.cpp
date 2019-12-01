@@ -27,11 +27,13 @@ Vesc::Vesc()
   keepAlive_p       = cmd.getKeepAlivepacket();
   allmotorData_p    = cmd.getMotorpacket();
   selectmotorData_p = cmd.getSelectMotorpacket();
+  RPM_p             = cmd.getMotorRPMpacket();
 
-    wheel_found[left_back]   = false;
-    wheel_found[left_front]  = false;
-    wheel_found[right_back]  = false;
-    wheel_found[right_front] = false;
+
+  wheel_found[left_back]   = false;
+  wheel_found[left_front]  = false;
+  wheel_found[right_back]  = false;
+  wheel_found[right_front] = false;
 }
 
 Vesc::~Vesc()
@@ -87,6 +89,18 @@ void Vesc::SetWheelsDuty(map<int, double> wheel_duty)
     }
 }
 
+map<int, double> Vesc::GetWheelsRPM()
+{
+    map<int, int>  rpn_data;
+    for(auto &[id, port]:wheel_ports)
+    {
+        if(sendandreceive(RPM_p, port))
+        {
+            rpn_data[id] = cmd.getMotorControllerData().rpm;
+        }
+        sleep_ms(5);
+    }
+}
 
 void Vesc::FindandMapMotorControllers()
 {
@@ -97,58 +111,70 @@ void Vesc::FindandMapMotorControllers()
 
     for(auto& port:filteredPorts)
     {
-        testport.Open(port);
-        if(testport.IsOpen())
+        if(sendandreceive(vesc_ID_p, port))
         {
-            testport.FlushIOBuffers();
-            testport.Write(vesc_ID_p.createPacket());
-            sleep_ms(100);
-            int bytes = testport.GetNumberOfBytesAvailable();
-            while( bytes < Packet::getminTotalPacketSize())
+            auto id = cmd.getMotorControllerData().vesc_id;
+            switch(id)
             {
-                sleep_ms(25);
+
+                case left_front:    //not implemented
+                case right_front:   //not implemented
+                case left_back:
+                case right_back:
+                     wheel_ports[id] = port;
+                     wheel_found[id] = true;
+                     break;
             }
-
-            DataBuffer  buffer;
-            testport.Read(buffer,bytes);
-
-            if(buffer.size() < Packet::getminTotalPacketSize())
-            {
-                //LOG(WARNING) << __FUNCTION__ << "Not enough data:"<< buffer.size() << " To process Packet. ";
-            }
-            else
-            {
-                vector<byte> convertedInput;
-                transform(begin(buffer), end(buffer), back_inserter(convertedInput), [] (uint8_t c) { return static_cast<byte>(c);});
-
-                Packet incoming;
-                incoming.processData(convertedInput);
-                if(incoming.isGoodPacket())
-                {
-                    cmd.processPacket(incoming.getPayload());
-                    auto id = cmd.getMotorControllerData().vesc_id;
-
-                    switch(id)
-                    {
-
-                        case left_front:    //not implemented
-                        case right_front:   //not implemented
-                        case left_back:
-                        case right_back:
-                             wheel_ports[id] = port;
-                             wheel_found[id] = true;
-                             break;
-                    }
-
-                }
-                else
-                {
-                    //LOG(WARNING) << __FUNCTION__ << "Packet not good.";
-                }
-
-            }
-            testport.Close();
         }
     }
 
 }
+
+bool Vesc::sendandreceive(Packet send_p, string port)
+{
+    SerialPort vescPort(port);
+    if(vescPort.IsOpen())
+    {
+        vescPort.FlushIOBuffers();
+        vescPort.Write(send_p.createPacket());
+        sleep_ms(25);
+        int bytes = vescPort.GetNumberOfBytesAvailable();
+        while (bytes < Packet::getminTotalPacketSize())
+        {
+            sleep_ms(25);
+        }
+
+        DataBuffer buffer;
+        vescPort.Read(buffer, bytes);
+        vescPort.Close();                   // all port action are done so close now
+
+        vector<byte> convertedInput;        // convert byte vector to uint8 vector
+        transform(begin(buffer), end(buffer), back_inserter(convertedInput), [](uint8_t c) { return static_cast<byte>(c); });
+
+        Packet incoming;
+        incoming.processData(convertedInput);
+        if (incoming.isGoodPacket())
+        {
+            cmd.processPacket(incoming.getPayload());
+            return true;
+        }
+        return false;  // Packet is not good
+    }
+    return false; // couldn't open  port
+}
+
+bool Vesc::sendandreceive(Packet send_p, int port)
+{
+    if(wheel_ports.find(port) != end(wheel_ports))
+    {
+        return sendandreceive(send_p, wheel_ports[port]);
+    }
+    else
+    {
+        return false;  //could find specified port
+    }
+}
+
+
+
+

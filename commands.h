@@ -55,6 +55,7 @@ public:
     Packet getKeepAlivepacket() {return Packet(COMM_ALIVE);}
 
     Packet getSelectMotorpacket() {return Packet(COMM_GET_VALUES_SELECTIVE, static_cast<unsigned>(MC_RPM|MC_CURR_MOTOR |MC_TEMP_MOTOR|MC_CURR_IN|MC_TACH_ABS | MC_TEMP_MOS));}
+    Packet getMotorRPMpacket() {return Packet(COMM_GET_VALUES_SELECTIVE, static_cast<unsigned>(MC_RPM|MC_TACH_ABS ));}
     Packet getMotorpacket() {return Packet(COMM_GET_VALUES);}
 
     MC_VALUES &getMotorControllerData();

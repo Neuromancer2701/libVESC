@@ -22,6 +22,7 @@ public:
     void FindandMapMotorControllers();
     void SetWheelsRPM(map<int, int> wheel_rpms);
     void SetWheelsDuty(map<int, double> wheel_duty);
+    map<int, double> GetWheelsRPM();
     bool isTwoWheelDrive();
     bool isFourWheelDrive();
 
@@ -40,8 +41,11 @@ private:
     Packet keepAlive_p;
 
     Packet selectmotorData_p;
+    Packet RPM_p;
     Packet allmotorData_p;
     Commands cmd;
+    bool sendandreceive(Packet send_p, int port);
+    bool sendandreceive(Packet send_p, string port);
 
     map<int,string> wheel_ports;
     map<int,bool> wheel_found;
