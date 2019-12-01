@@ -25,6 +25,7 @@ public:
     map<int, double> GetWheelsRPM();
     bool isTwoWheelDrive();
     bool isFourWheelDrive();
+    bool anyWheels(){return any_of(begin(wheel_found), end(wheel_found),  [](auto kv){return kv.second;});}
 
     enum wheel_ids
     {
