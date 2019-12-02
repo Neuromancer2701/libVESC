@@ -26,6 +26,7 @@ public:
     bool isTwoWheelDrive();
     bool isFourWheelDrive();
     bool anyWheels(){return any_of(begin(wheel_found), end(wheel_found),  [](auto kv){return kv.second;});}
+    map<int,bool> Wheels() { return wheel_found;}
 
     enum wheel_ids
     {

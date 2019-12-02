@@ -3,8 +3,13 @@
 #include "Vesc.h"
 #include <args.hxx>
 #include<iostream>
+#include <tuple>
+#include <utility>
 
 using std::cout;
+using std::ignore;
+using std::make_pair;
+
 
 int main(int argc, char **argv)
 {
@@ -43,11 +48,18 @@ int main(int argc, char **argv)
     if( !vescAPI.anyWheels())
     {
         std::cout << "Could not find any wheels!!!!" << std::endl;
+        return 1;
     }
 
     if (pwm)
     {
-        //args::get(pwm)
+        map<int, double > pwmMap;
+        for(auto &[id, ignore]:vescAPI.Wheels())
+        {
+            pwmMap.insert(make_pair(id, static_cast<double >(args::get(pwm))));
+        }
+
+        vescAPI.SetWheelsDuty(pwmMap);
     }
 
     if (getrpm)
@@ -61,7 +73,13 @@ int main(int argc, char **argv)
 
     if (setrpm)
     {
-        std::cout << "rpm:" << args::get(setrpm) << std::endl;
+        map<int, int > rpmMap;
+        for(auto &[id, ignore]:vescAPI.Wheels())
+        {
+            rpmMap.insert(make_pair(id, args::get(setrpm)));
+        }
+
+        vescAPI.SetWheelsRPM(rpmMap);
     }
     return 0;
 
