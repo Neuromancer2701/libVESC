@@ -91,15 +91,16 @@ void Vesc::SetWheelsDuty(map<int, double> wheel_duty)
 
 map<int, double> Vesc::GetWheelsRPM()
 {
-    map<int, int>  rpn_data;
+    map<int, double >  rpm_data;
     for(auto &[id, port]:wheel_ports)
     {
         if(sendandreceive(RPM_p, port))
         {
-            rpn_data[id] = cmd.getMotorControllerData().rpm;
+            rpm_data[id] = cmd.getMotorControllerData().rpm;
         }
         sleep_ms(5);
     }
+    return rpm_data;
 }
 
 void Vesc::FindandMapMotorControllers()
