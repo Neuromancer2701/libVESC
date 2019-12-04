@@ -19,6 +19,7 @@ int main(int argc, char **argv)
     args::ValueFlag<int> pwm(parser, "pwm", "Set pwn to x percent", {"pwm"});
     args::Flag getrpm(parser, "getRPM", "Get the RPM value of motors", {"getRPM"});
     args::ValueFlag<int> setrpm(parser, "setRPM", "Set the RPM value of motors", {"setRPM"});
+    args::Flag find(parser, "find", "find and display motor ids", {"find"});
 
     try
     {
@@ -81,6 +82,19 @@ int main(int argc, char **argv)
 
         vescAPI.SetWheelsRPM(rpmMap);
     }
+
+    if (find)
+    {
+        for(auto &[id, found]:vescAPI.Wheels())
+        {
+            if(found)
+            {
+                std::cout << "Motor id: "<< id << "has been found." << std::endl;
+            }
+
+        }
+    }
+
     return 0;
 
 
