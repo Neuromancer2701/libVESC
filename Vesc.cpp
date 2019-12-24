@@ -177,5 +177,31 @@ bool Vesc::sendandreceive(Packet send_p, int port)
 }
 
 
+map<int, MC_VALUES > Vesc::GetSelectMotorData()
+{
+    map<int, MC_VALUES >  motor_data;
+    for(auto &[id, port]:wheel_ports)
+    {
+        if(sendandreceive(selectmotorData_p, port))
+        {
+            motor_data[id] = cmd.getMotorControllerData();
+        }
+        sleep_ms(5);
+    }
+    return motor_data;
+}
 
 
+map<int, MC_VALUES > Vesc::GetAllMotorData()
+{
+    map<int, MC_VALUES >  motor_data;
+    for(auto &[id, port]:wheel_ports)
+    {
+        if(sendandreceive(allmotorData_p, port))
+        {
+            motor_data[id] = cmd.getMotorControllerData();
+        }
+        sleep_ms(5);
+    }
+    return motor_data;
+}
