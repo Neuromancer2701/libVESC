@@ -22,7 +22,10 @@
 
 #include <string>
 
-using std::string;
+namespace {
+    using std::string;
+}
+
 
 enum VESC_TX_T 
 {

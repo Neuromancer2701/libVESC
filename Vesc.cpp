@@ -1,6 +1,3 @@
-//
-// Created by root on 5/29/19.
-//
 
 
 #include <string_view>
@@ -9,15 +6,18 @@
 #include <thread>
 #include "Vesc.h"
 #include "utils.h"
-#include "SerialPortConstants.h"
+#include "SerialPort.h"
 #include "commands.h"
 #include <algorithm>
 
-using std::to_string;
-using std::this_thread::sleep_for;
-using std::chrono::milliseconds;
-using LibSerial::DataBuffer;
-using std::all_of;
+namespace {
+    using std::to_string;
+    using std::this_thread::sleep_for;
+    using std::chrono::milliseconds;
+    using std::all_of;
+}
+
+
 
 inline void sleep_ms(long long millis){sleep_for(milliseconds(millis));}
 

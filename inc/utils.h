@@ -1,20 +1,19 @@
-//
-// Created by root on 5/29/19.
-//
 
 #ifndef VESC_UTILS_H
 #define VESC_UTILS_H
 
 #include <vector>
 #include <numeric>
+namespace {
+    using std::vector;
+    using std::iota;
+}
 
-using std::vector;
-using std::iota;
 
-class utils
+namespace utils
 {
-public:
-    static vector<int> range(int stop, int start = 0 )
+
+    vector<int> range(int stop, int start = 0 )
     {
         vector<int> x(stop);
         iota(begin(x), end(x), start);
