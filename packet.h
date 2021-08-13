@@ -37,9 +37,13 @@ namespace {
     using std::uint8_t;
     using std::uint16_t;
     using std::uint32_t;
+
 }
 
 namespace vesc {
+
+    constexpr long minTotalPacketSize = 6;
+
 
     class Packet {
 
@@ -48,11 +52,8 @@ namespace vesc {
 
         Packet(COMM_PACKET_ID Id);
 
-        Packet(COMM_PACKET_ID Id, unsigned data);
-
-        Packet(COMM_PACKET_ID Id, unsigned short data);
-
-        Packet(COMM_PACKET_ID Id, unsigned char data);
+        template<class T>
+        Packet(COMM_PACKET_ID Id, T data);
 
         Packet(COMM_PACKET_ID Id, double number, double scale);
 
@@ -78,7 +79,7 @@ namespace vesc {
 
         vector<byte> &getPayload();
 
-        static long getminTotalPacketSize() { return static_cast<long>(minTotalPacketSize); }
+        static long getminTotalPacketSize() { return minTotalPacketSize; }
 
         bool isGoodPacket() { return processState == GoodPacket; }
 
@@ -111,8 +112,9 @@ namespace vesc {
             CRCSize = 2,
             maxPacketLength = 512,
             End = 3,
-            minTotalPacketSize = 6
+
         };
+
 
         States processState;
 

@@ -24,7 +24,12 @@
 namespace {
     using utils::range;
     using std::numeric_limits;
-// CRC Table
+    using std::is_integral_v;
+    constexpr unsigned u24{24};
+    constexpr unsigned u16{16};
+    constexpr unsigned u8{8};
+
+    // CRC Table
     constexpr unsigned short crc16_tab[] = {0x0000, 0x1021, 0x2042, 0x3063, 0x4084,
                                             0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad,
                                             0xe1ce, 0xf1ef, 0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7,
@@ -68,16 +73,9 @@ Packet::Packet(COMM_PACKET_ID Id) : Packet() {
     append(rawData, packetId);
 }
 
-
-Packet::Packet(COMM_PACKET_ID Id, unsigned data) : Packet(Id) {
-    append(rawData, data);
-}
-
-Packet::Packet(COMM_PACKET_ID Id, unsigned short data) : Packet(Id) {
-    append(rawData, data);
-}
-
-Packet::Packet(COMM_PACKET_ID Id, unsigned char data) : Packet(Id) {
+template<class T>
+Packet::Packet(COMM_PACKET_ID Id, T data) : Packet(Id) {
+    static_assert(is_integral_v<T> && (sizeof(T) <= sizeof(uint32_t)), "Integral required of size 1-4.");
     append(rawData, data);
 }
 
@@ -152,11 +150,11 @@ void Packet::processData(vector<byte> inputData) {
                 break;
 
             case Length3byte:                       // 1, 2, 3 if Length Starts here
-                packetLength = static_cast<unsigned>(inputData[1]) << static_cast<unsigned>(16);
+                packetLength = static_cast<unsigned>(inputData[1]) << u16;
                 offset++;
 
             case Length2byte:                       // 1, 2 if Length Starts here
-                packetLength |= static_cast<unsigned>(inputData[1 + offset]) << static_cast<unsigned>(8);
+                packetLength |= static_cast<unsigned>(inputData[1 + offset]) << u8;
                 offset++;
 
             case Length1byte:                       // 1  if Length Starts here
@@ -179,11 +177,11 @@ void Packet::processData(vector<byte> inputData) {
 
             case CalcCRC:
                 packetCRC = (static_cast<unsigned short>(inputData[packetLength + minBytes + offset]) &
-                             static_cast<unsigned>(0xFF)) << static_cast<unsigned>(8);
+                             static_cast<unsigned>(0xFF)) << u8;
                 packetCRC |= static_cast<unsigned short>(inputData[packetLength + minBytes + offset + 1]) &
                              static_cast<unsigned>(0xFF);
-                lastByte = static_cast<unsigned char>(inputData[packetLength + minBytes + offset +
-                                                                2]);  // just get last byte while we are here.
+                lastByte = static_cast<unsigned char>(inputData[packetLength + minBytes + offset + 2]);
+                // just get last byte while we are here.
                 processState = ValidateCRC;
                 break;
 
@@ -209,6 +207,8 @@ void Packet::processData(vector<byte> inputData) {
 
 template<class T>
 void Packet::append(vector<byte> &message, T data) {
+    static_assert(is_integral_v<T> && (sizeof(T) <= sizeof(uint32_t)), "Integral required of size 1-4.");
+
     switch (sizeof(T)) {
         case 4:
             message.push_back(static_cast<byte>((data >> 24) & 0xFF));
