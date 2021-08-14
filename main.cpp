@@ -5,11 +5,13 @@
 #include<iostream>
 #include <tuple>
 #include <utility>
+namespace {
+    using std::cout;
+    using std::ignore;
+    using std::make_pair;
+}
 
-using std::cout;
-using std::ignore;
-using std::make_pair;
-
+using namespace vesc;
 
 int main(int argc, char **argv)
 {
@@ -94,9 +96,6 @@ int main(int argc, char **argv)
 
         }
     }
-
-    return 0;
-
 
     return 0;
 }

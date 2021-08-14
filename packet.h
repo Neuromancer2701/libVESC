@@ -1,5 +1,5 @@
 /*
-    Copyright 2016 - 2019 Benjamin Vedder	benjamin@vedder.se
+    Copyright 2016 - 2021 Benjamin Vedder	benjamin@vedder.se
 
     This file is part of VESC Tool.
 
@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    */
+*/
 
 #ifndef PACKET_H
 #define PACKET_H
@@ -25,25 +25,31 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
 #include <functional>
 #include <SerialPort.h>
+#include "utils.h"
+
+
 namespace {
     using std::vector;
-    using std::byte;
     using std::function;
     using std::round;
     using LibSerial::SerialPort;
-    using std::uint8_t;
-    using std::uint16_t;
-    using std::uint32_t;
+    using std::is_integral_v;
 
+    constexpr uint32_t u24{24};
+    constexpr uint32_t u16{16};
+    constexpr uint32_t u8{8};
+    constexpr uint8_t FF = 0xFF;
 }
 
 namespace vesc {
+    using utils::castu8;
+    using utils::castu16;
+    using utils::castu32;
+    using utils::castdouble;
 
-    constexpr long minTotalPacketSize = 6;
-
+    constexpr uint8_t minTotalPacketSize = 6;
 
     class Packet {
 
@@ -61,40 +67,33 @@ namespace vesc {
 
         vector<uint8_t> createPacket();
 
-        static unsigned short crc16(vector<byte> payload);
+        static unsigned short crc16(const vector<uint8_t> &payload);
 
-        void processData(vector<byte> inputData);
-
-        template<class T>
-        static void append(vector<byte> &message, T data);
+        void processData(vector<uint8_t> inputData);
 
         template<class T>
-        static void pop(vector<byte> &message, T &data);
+        static void append(vector<uint8_t> &message, T data);
 
-        static void appendDouble32(vector<byte> &message, double number, double scale);
+        template<class T>
+        static void pop(vector<uint8_t> &message, T &data);
 
-        static double popDouble16(vector<byte> &message, double scale);
+        static void appendDouble32(vector<uint8_t> &message, double number, double scale);
 
-        static double popDouble32(vector<byte> &message, double scale);
+        static double popDouble16(vector<uint8_t> &message, double scale);
 
-        vector<byte> &getPayload();
+        static double popDouble32(vector<uint8_t> &message, double scale);
+
+        vector<uint8_t> &getPayload();
 
         static long getminTotalPacketSize() { return minTotalPacketSize; }
 
-        bool isGoodPacket() { return processState == GoodPacket; }
+        bool isGoodPacket() { return m_ProcessState == GoodPacket; }
 
 
     private:
-        vector<byte> rawData;
-        vector<byte> payload;
-        vector<byte> sendData;
-
-        enum SIZE {
-            Byte = 1,
-            Word = 2,
-            Integer = 4
-        };
-
+        vector<uint8_t> rawData;
+        vector<uint8_t> payload;
+        vector<uint8_t> sendData;
 
         enum States {
             DetectLength = 0,
@@ -107,18 +106,10 @@ namespace vesc {
             GoodPacket = 8
         };
 
-        enum constants {
-            minBytes = 2,
-            CRCSize = 2,
-            maxPacketLength = 512,
-            End = 3,
-
-        };
-
-
-        States processState;
-
+        States m_ProcessState;
 
     };
+
+#include "packet.tcc"
 }
 #endif // PACKET_H

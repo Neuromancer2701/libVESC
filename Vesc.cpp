@@ -15,9 +15,10 @@ namespace {
     using std::this_thread::sleep_for;
     using std::chrono::milliseconds;
     using std::all_of;
+    using LibSerial::DataBuffer;
 }
 
-
+using namespace vesc;
 
 inline void sleep_ms(long long millis){sleep_for(milliseconds(millis));}
 
@@ -131,29 +132,27 @@ void Vesc::FindandMapMotorControllers()
 
 }
 
-bool Vesc::sendandreceive(Packet send_p, string port)
+bool Vesc::sendandreceive(Packet &packet, const string &port)
 {
     SerialPort vescPort(port);
     if(vescPort.IsOpen())
     {
         vescPort.FlushIOBuffers();
-        vescPort.Write(send_p.createPacket());
+        vescPort.Write(packet.createPacket());
         sleep_ms(25);
-        int bytes = vescPort.GetNumberOfBytesAvailable();
+
+        auto bytes{vescPort.GetNumberOfBytesAvailable()};
         while (bytes < Packet::getminTotalPacketSize())
         {
+            bytes = vescPort.GetNumberOfBytesAvailable();
             sleep_ms(25);
         }
 
         DataBuffer buffer;
         vescPort.Read(buffer, bytes);
-        vescPort.Close();                   // all port action are done so close now
-
-        vector<byte> convertedInput;        // convert byte vector to uint8 vector
-        transform(begin(buffer), end(buffer), back_inserter(convertedInput), [](uint8_t c) { return static_cast<byte>(c); });
 
         Packet incoming;
-        incoming.processData(convertedInput);
+        incoming.processData(buffer);
         if (incoming.isGoodPacket())
         {
             cmd.processPacket(incoming.getPayload());
@@ -164,11 +163,11 @@ bool Vesc::sendandreceive(Packet send_p, string port)
     return false; // couldn't open  port
 }
 
-bool Vesc::sendandreceive(Packet send_p, int port)
+bool Vesc::sendandreceive(Packet &packet, const int &port)
 {
     if(wheel_ports.find(port) != end(wheel_ports))
     {
-        return sendandreceive(send_p, wheel_ports[port]);
+        return sendandreceive(packet, wheel_ports[port]);
     }
     else
     {

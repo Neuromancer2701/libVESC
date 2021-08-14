@@ -23,66 +23,104 @@
 
 #include "packet.h"
 
-class Commands
-{
+namespace vesc {
 
-public:
-    Commands();
+    class Commands {
+    public:
+        Commands();
 
-    void setLimitedMode(bool is_limited);
-    bool isLimitedMode();
-    bool setSendCan(bool sendCan, int id = -1);
-    bool getSendCan();
-    void setCanSendId(unsigned int id);
-    int getCanSendId();
+        inline void setLimitedMode(bool is_limited)
+        {
+            mIsLimitedMode = is_limited;
+        }
 
+        inline bool isLimitedMode()
+        {
+            return mIsLimitedMode;
+        }
 
-    void processPacket(vector<byte> &message);
+        bool setSendCan(bool sendCan, int32_t id = -1);
 
-    void getFwVersion(SerialPort vescPort);
-    void getValues(SerialPort vescPort);
-    void setDutyCycle(double dutyCycle, SerialPort vescPort);
-    void setCurrent(double current, SerialPort vescPort);
-    void setCurrentBrake(double current, SerialPort vescPort);
-    void setRpm(int rpm, SerialPort vescPort);
-    void setPos(double pos, SerialPort vescPort);
-    void setHandbrake(double current, SerialPort vescPort);
-    void reboot(SerialPort vescPort);
-    void sendAlive(SerialPort vescPort);
-    void getValuesSelective(unsigned int mask, SerialPort vescPort);
-    void getImuData(unsigned int mask, SerialPort vescPort);
-    Packet getVescIDpacket() {return Packet(COMM_GET_VALUES_SELECTIVE, static_cast<unsigned>(MC_TACH_ABS | MC_VESC_ID));}
-    Packet getKeepAlivepacket() {return Packet(COMM_ALIVE);}
+        inline bool getSendCan(){
+            return mSendCan;
+        }
 
-    Packet getSelectMotorpacket() {return Packet(COMM_GET_VALUES_SELECTIVE, static_cast<unsigned>(MC_RPM|MC_CURR_MOTOR |MC_TEMP_MOTOR|MC_CURR_IN|MC_TACH_ABS | MC_TEMP_MOS));}
-    Packet getMotorRPMpacket() {return Packet(COMM_GET_VALUES_SELECTIVE, static_cast<unsigned>(MC_RPM|MC_TACH_ABS ));}
-    Packet getMotorpacket() {return Packet(COMM_GET_VALUES);}
+        inline void setCanSendId(int32_t id){
+            mCanId = id;
+        }
 
-    MC_VALUES &getMotorControllerData();
+        int32_t getCanSendId(){
+            return mCanId;
+        }
 
-private:
+        void processPacket(vector<uint8_t> &message);
 
-    string faultToStr(mc_fault_code fault);
+        void getFwVersion(SerialPort vescPort);
 
-    bool mSendCan;
-    int mCanId;
-    bool mIsLimitedMode;
-    bool mLimitedSupportsFwdAllCan;
+        void getValues(SerialPort vescPort);
 
-    int mTimeoutCount;
-    int mTimeoutFwVer;
-    int mTimeoutMcconf;
-    int mTimeoutAppconf;
-    int mTimeoutValues;
-    int mTimeoutValuesSetup;
-    int mTimeoutImuData;
-    int mTimeoutDecPpm;
-    int mTimeoutDecAdc;
-    int mTimeoutDecChuk;
-    int mTimeoutPingCan;
+        void setDutyCycle(double dutyCycle, SerialPort vescPort);
 
-    MC_VALUES  motorControllerData;
+        void setCurrent(double current, SerialPort vescPort);
 
-};
+        void setCurrentBrake(double current, SerialPort vescPort);
+
+        void setRpm(int32_t rpm, SerialPort vescPort);
+
+        void setPos(double pos, SerialPort vescPort);
+
+        void setHandbrake(double current, SerialPort vescPort);
+
+        void reboot(SerialPort vescPort);
+
+        void sendAlive(SerialPort vescPort);
+
+        void getValuesSelective(uint32_t mask, SerialPort vescPort);
+
+        void getImuData(uint32_t mask, SerialPort vescPort);
+
+        static Packet getVescIDpacket() { return Packet(COMM_GET_VALUES_SELECTIVE, castu32(MC_TACH_ABS | MC_VESC_ID)); }
+
+        static Packet getKeepAlivepacket() { return Packet(COMM_ALIVE); }
+
+        static Packet getSelectMotorpacket() {
+            return Packet(COMM_GET_VALUES_SELECTIVE,
+                          castu32(MC_RPM | MC_CURR_MOTOR | MC_TEMP_MOTOR | MC_CURR_IN |
+                                  MC_TACH_ABS | MC_TEMP_MOS));
+        }
+
+        static Packet getMotorRPMpacket() { return Packet(COMM_GET_VALUES_SELECTIVE, castu32(MC_RPM | MC_TACH_ABS)); }
+
+        static Packet getMotorpacket() { return Packet(COMM_GET_VALUES); }
+
+        MC_VALUES &getMotorControllerData();
+
+    private:
+
+        string faultToStr(mc_fault_code fault);
+
+        bool mSendCan;
+        int32_t mCanId;
+        bool mIsLimitedMode;
+        bool mLimitedSupportsFwdAllCan;
+
+        int32_t mTimeoutCount;
+        int32_t mTimeoutFwVer;
+        int32_t mTimeoutMcconf;
+        int32_t mTimeoutAppconf;
+        int32_t mTimeoutValues;
+        int32_t mTimeoutValuesSetup;
+        int32_t mTimeoutImuData;
+        int32_t mTimeoutDecPpm;
+        int32_t mTimeoutDecAdc;
+        int32_t mTimeoutDecChuk;
+        int32_t mTimeoutPingCan;
+
+        MC_VALUES motorControllerData;
+
+    };
+
+}
+
 
 #endif // COMMANDS_H
