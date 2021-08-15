@@ -81,10 +81,10 @@ Packet::~Packet() {
 
 }
 
-vector<uint8_t> Packet::createPacket() {
+vector<uint8_t> Packet::createPacket() const{
 
     uint32_t len_tot = rawData.size();
-    sendData.clear();
+    vector<uint8_t> sendData;
 
     if (len_tot <= numeric_limits<uint8_t>::max()) //255
     {
@@ -104,11 +104,7 @@ vector<uint8_t> Packet::createPacket() {
     append(sendData, crc);
     append(sendData, castu8(3));
 
-    vector<uint8_t> convertedSend;
-    transform(begin(sendData), end(sendData), back_inserter(convertedSend),
-              [](auto c) { return static_cast<uint8_t >(c); });
-
-    return convertedSend;
+    return sendData;
 }
 
 uint16_t Packet::crc16(const vector<uint8_t> &payload) {

@@ -20,49 +20,33 @@ namespace {
 
 using namespace vesc;
 
-inline void sleep_ms(long long millis){sleep_for(milliseconds(millis));}
+inline void sleep_ms(long long millis) { sleep_for(milliseconds(millis)); }
 
 Vesc::Vesc()
-{
-  vesc_ID_p         = cmd.getVescIDpacket();
-  keepAlive_p       = cmd.getKeepAlivepacket();
-  allmotorData_p    = cmd.getMotorpacket();
-  selectmotorData_p = cmd.getSelectMotorpacket();
-  RPM_p             = cmd.getMotorRPMpacket();
-
-
-  wheel_found[left_back]   = false;
-  wheel_found[left_front]  = false;
-  wheel_found[right_back]  = false;
-  wheel_found[right_front] = false;
+        : m_VescIDPacket(Commands::getVescIDpacket()), m_KeepAlivePacket(Commands::getKeepAlivepacket()),
+          m_AllMotorDataPacket(Commands::getMotorpacket()), m_SelectmotorDataPacket(Commands::getSelectMotorpacket()),
+          m_RPMPacket(Commands::getMotorRPMpacket()), wheel_found({{left_back,   false},
+                                                                   {left_front,  false},
+                                                                   {right_back,  false},
+                                                                   {right_front, false}}) {
 }
 
-Vesc::~Vesc()
-{
 
+bool Vesc::isTwoWheelDrive() {
+    return ((wheel_found[left_back] && wheel_found[right_back]) ||
+            (wheel_found[left_front] && wheel_found[right_front]));
 }
 
-bool Vesc::isTwoWheelDrive()
-{
-    return ((wheel_found[left_back] && wheel_found[right_back]) || (wheel_found[left_front] && wheel_found[right_front]));
+bool Vesc::isFourWheelDrive() {
+    return all_of(begin(wheel_found), end(wheel_found), [](auto key_value) { return key_value.second; });
 }
 
-bool Vesc::isFourWheelDrive()
-{
-    return all_of(begin(wheel_found),end(wheel_found),[](auto key_value){return key_value.second;});
-}
-
-void Vesc::SetWheelsRPM(map<int, int> wheel_rpms)
-{
-    for(auto &[id, port]:wheel_ports)
-    {
+void Vesc::SetWheelsRPM(unordered_map<int, int> wheel_rpms) {
+    for (auto &[id, port]:wheel_ports) {
         SerialPort vescPort(port);
-        if(wheel_rpms.find(id) != end(wheel_rpms))
-        {
+        if (wheel_rpms.find(id) != end(wheel_rpms)) {
             vescPort.Write(Packet(COMM_SET_RPM, static_cast<unsigned>(wheel_rpms[id])).createPacket());
-        }
-        else
-        {
+        } else {
             //LOG(WARNING) << "ID Not Found input RPM set data: " << id ;
         }
 
@@ -71,17 +55,12 @@ void Vesc::SetWheelsRPM(map<int, int> wheel_rpms)
     }
 }
 
-void Vesc::SetWheelsDuty(map<int, double> wheel_duty)
-{
-    for(auto &[id, port]:wheel_ports)
-    {
+void Vesc::SetWheelsDuty(unordered_map<int, double> wheel_duty) {
+    for (auto &[id, port]:wheel_ports) {
         SerialPort vescPort(port);
-        if(wheel_duty.find(id) != end(wheel_duty))
-        {
-            vescPort.Write(Packet(COMM_SET_DUTY,wheel_duty[id], 1e5).createPacket());
-        }
-        else
-        {
+        if (wheel_duty.find(id) != end(wheel_duty)) {
+            vescPort.Write(Packet(COMM_SET_DUTY, wheel_duty[id], 1e5).createPacket());
+        } else {
             //LOG(WARNING) << "ID Not Found input RPM set data: " << id ;
         }
 
@@ -90,13 +69,10 @@ void Vesc::SetWheelsDuty(map<int, double> wheel_duty)
     }
 }
 
-map<int, double> Vesc::GetWheelsRPM()
-{
-    map<int, double >  rpm_data;
-    for(auto &[id, port]:wheel_ports)
-    {
-        if(sendandreceive(RPM_p, port))
-        {
+unordered_map<int, double> Vesc::GetWheelsRPM() {
+    unordered_map<int, double> rpm_data;
+    for (auto &[id, port]:wheel_ports) {
+        if (SendAndReceive(m_RPMPacket, port)) {
             rpm_data[id] = cmd.getMotorControllerData().rpm;
         }
         sleep_ms(5);
@@ -104,46 +80,41 @@ map<int, double> Vesc::GetWheelsRPM()
     return rpm_data;
 }
 
-void Vesc::FindandMapMotorControllers()
-{
+void Vesc::FindandMapMotorControllers() {
     SerialPort testport;
     vector<string> serialPorts = testport.GetAvailableSerialPorts();
     vector<string> filteredPorts;
-    copy_if(begin(serialPorts), end(serialPorts), back_inserter(filteredPorts), [](auto s) { return s.find("ttyACM") != std::string::npos; });
+    copy_if(begin(serialPorts), end(serialPorts), back_inserter(filteredPorts),
+            [](auto s) { return s.find("ttyACM") != std::string::npos; });
 
-    for(auto& port:filteredPorts)
-    {
-        if(sendandreceive(vesc_ID_p, port))
-        {
+    for (auto &port:filteredPorts) {
+        if (SendAndReceive(m_VescIDPacket, port)) {
             auto id = cmd.getMotorControllerData().vesc_id;
-            switch(id)
-            {
+            switch (id) {
 
+                default:
                 case left_front:    //not implemented
                 case right_front:   //not implemented
                 case left_back:
                 case right_back:
-                     wheel_ports[id] = port;
-                     wheel_found[id] = true;
-                     break;
+                    wheel_ports[id] = port;
+                    wheel_found[id] = true;
+                    break;
             }
         }
     }
 
 }
 
-bool Vesc::sendandreceive(Packet &packet, const string &port)
-{
+bool Vesc::SendAndReceive(const Packet &packet, const string &port) {
     SerialPort vescPort(port);
-    if(vescPort.IsOpen())
-    {
+    if (vescPort.IsOpen()) {
         vescPort.FlushIOBuffers();
         vescPort.Write(packet.createPacket());
         sleep_ms(25);
 
         auto bytes{vescPort.GetNumberOfBytesAvailable()};
-        while (bytes < Packet::getminTotalPacketSize())
-        {
+        while (bytes < Packet::getminTotalPacketSize()) {
             bytes = vescPort.GetNumberOfBytesAvailable();
             sleep_ms(25);
         }
@@ -153,8 +124,7 @@ bool Vesc::sendandreceive(Packet &packet, const string &port)
 
         Packet incoming;
         incoming.processData(buffer);
-        if (incoming.isGoodPacket())
-        {
+        if (incoming.isGoodPacket()) {
             cmd.processPacket(incoming.getPayload());
             return true;
         }
@@ -163,26 +133,19 @@ bool Vesc::sendandreceive(Packet &packet, const string &port)
     return false; // couldn't open  port
 }
 
-bool Vesc::sendandreceive(Packet &packet, const int &port)
-{
-    if(wheel_ports.find(port) != end(wheel_ports))
-    {
-        return sendandreceive(packet, wheel_ports[port]);
-    }
-    else
-    {
+bool Vesc::SendAndReceive(const Packet &packet, const int &port) {
+    if (wheel_ports.find(port) != end(wheel_ports)) {
+        return SendAndReceive(packet, wheel_ports[port]);
+    } else {
         return false;  //could find specified port
     }
 }
 
 
-map<int, MC_VALUES > Vesc::GetSelectMotorData()
-{
-    map<int, MC_VALUES >  motor_data;
-    for(auto &[id, port]:wheel_ports)
-    {
-        if(sendandreceive(selectmotorData_p, port))
-        {
+unordered_map<int, MC_VALUES> Vesc::GetSelectMotorData() {
+    unordered_map<int, MC_VALUES> motor_data;
+    for (auto &[id, port]:wheel_ports) {
+        if (SendAndReceive(m_SelectmotorDataPacket, port)) {
             motor_data[id] = cmd.getMotorControllerData();
         }
         sleep_ms(5);
@@ -191,13 +154,10 @@ map<int, MC_VALUES > Vesc::GetSelectMotorData()
 }
 
 
-map<int, MC_VALUES > Vesc::GetAllMotorData()
-{
-    map<int, MC_VALUES >  motor_data;
-    for(auto &[id, port]:wheel_ports)
-    {
-        if(sendandreceive(allmotorData_p, port))
-        {
+unordered_map<int, MC_VALUES> Vesc::GetAllMotorData() {
+    unordered_map<int, MC_VALUES> motor_data;
+    for (auto &[id, port]:wheel_ports) {
+        if (SendAndReceive(m_AllMotorDataPacket, port)) {
             motor_data[id] = cmd.getMotorControllerData();
         }
         sleep_ms(5);

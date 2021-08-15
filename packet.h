@@ -65,7 +65,7 @@ namespace vesc {
 
         ~Packet();
 
-        vector<uint8_t> createPacket();
+        [[nodiscard]] vector<uint8_t> createPacket() const;
 
         static unsigned short crc16(const vector<uint8_t> &payload);
 
@@ -93,7 +93,6 @@ namespace vesc {
     private:
         vector<uint8_t> rawData;
         vector<uint8_t> payload;
-        vector<uint8_t> sendData;
 
         enum States {
             DetectLength = 0,

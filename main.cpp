@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 
     if (pwm)
     {
-        map<int, double > pwmMap;
+        unordered_map<int, double > pwmMap;
         for(auto &[id, ignore]:vescAPI.Wheels())
         {
             pwmMap.insert(make_pair(id, static_cast<double >(args::get(pwm))));
@@ -76,10 +76,10 @@ int main(int argc, char **argv)
 
     if (setrpm)
     {
-        map<int, int > rpmMap;
+        unordered_map<int, int > rpmMap;
         for(auto &[id, ignore]:vescAPI.Wheels())
         {
-            rpmMap.insert(make_pair(id, args::get(setrpm)));
+            rpmMap.try_emplace(id, args::get(setrpm));
         }
 
         vescAPI.SetWheelsRPM(rpmMap);

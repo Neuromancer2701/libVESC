@@ -3,56 +3,66 @@
 #define VESC_H
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include "commands.h"
 
-using std::map;
-using std::string;
+namespace {
+    using std::unordered_map;
+    using std::string;
+}
 
 namespace vesc {
-    class Vesc
-    {
+    class Vesc {
     public:
         Vesc();
 
-        virtual ~Vesc();
-        void FindandMapMotorControllers();
-        void SetWheelsRPM(map<int, int> wheel_rpms);
-        void SetWheelsDuty(map<int, double> wheel_duty);
-        map<int, double> GetWheelsRPM();
-        map<int, MC_VALUES > GetSelectMotorData();
-        map<int, MC_VALUES > GetAllMotorData();
-        bool isTwoWheelDrive();
-        bool isFourWheelDrive();
-        bool anyWheels(){return any_of(begin(wheel_found), end(wheel_found),  [](auto kv){return kv.second;});}
-        map<int,bool> Wheels() { return wheel_found;}
+        virtual ~Vesc() = default;
 
-        enum wheel_ids
-        {
-            left_back    = 100,
-            right_back   = 200,
-            left_front   = 300,
-            right_front  = 400
+        void FindandMapMotorControllers();
+
+        void SetWheelsRPM(unordered_map<int, int> wheel_rpms);
+
+        void SetWheelsDuty(unordered_map<int, double> wheel_duty);
+
+        unordered_map<int, double> GetWheelsRPM();
+
+        unordered_map<int, MC_VALUES> GetSelectMotorData();
+
+        unordered_map<int, MC_VALUES> GetAllMotorData();
+
+        bool isTwoWheelDrive();
+
+        bool isFourWheelDrive();
+
+        bool anyWheels() { return any_of(begin(wheel_found), end(wheel_found), [](auto kv) { return kv.second; }); }
+
+        unordered_map<int, bool> Wheels() { return wheel_found; }
+
+        enum wheel_ids {
+            left_back = 100,
+            right_back = 200,
+            left_front = 300,
+            right_front = 400
         };
 
 
     private:
 
-        Packet vesc_ID_p;
-        Packet keepAlive_p;
+        const Packet m_VescIDPacket;
+        const Packet m_KeepAlivePacket;
+        const Packet m_AllMotorDataPacket;
+        const Packet m_SelectmotorDataPacket;
+        const Packet m_RPMPacket;
 
-        Packet selectmotorData_p;
-        Packet RPM_p;
-        Packet allmotorData_p;
         Commands cmd;
-        bool sendandreceive(Packet &packet, const int &port);
-        bool sendandreceive(Packet &packet, const string &port);
 
-        map<int,string> wheel_ports;
-        map<int,bool> wheel_found;
+        bool SendAndReceive(const Packet &packet, const string &port);
+        bool SendAndReceive(const Packet &packet, const int &port);
+
+        unordered_map<int, string> wheel_ports;
+        unordered_map<int, bool> wheel_found;
     };
 }
-
 
 
 #endif //VESC_H
