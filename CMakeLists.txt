@@ -3,12 +3,12 @@ project(VESC)
 
 set(CMAKE_CXX_STANDARD 20)
 include_directories(inc
-                    /usr/local/include/libserial)
+        /usr/include/libserial)
 
-link_directories(/usr/local/lib/ ${PROJECT_SOURCE_DIR}/lib)
+link_directories(/usr/include/libserial ${PROJECT_SOURCE_DIR}/lib)
 
 
-add_library(VESC
+add_library(VESC SHARED
         inc/datatypes.h
         packet.cpp
         packet.h
